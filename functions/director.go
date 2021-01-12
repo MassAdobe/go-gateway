@@ -6,6 +6,8 @@
 package functions
 
 import (
+	"github.com/MassAdobe/go-gateway/constants"
+	"github.com/MassAdobe/go-gateway/filter"
 	"github.com/MassAdobe/go-gateway/loadbalance"
 	"github.com/MassAdobe/go-gateway/nacos"
 	"net/http"
@@ -35,13 +37,15 @@ func rtnDirector() func(req *http.Request) {
 		targetQuery := target.RawQuery
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
-		req.Header.Set("X-Real-Ip", req.RemoteAddr)
+		req.Header.Set(constants.REQUEST_REAL_HOST, target.Host)
+		req.Header.Set(constants.REQUEST_REAL_IP, req.RemoteAddr)
 		req.URL.Path = singleJoiningSlash(target.Path, req.URL.Path)
 		if targetQuery == "" || req.URL.RawQuery == "" {
 			req.URL.RawQuery = targetQuery + req.URL.RawQuery
 		} else {
 			req.URL.RawQuery = targetQuery + "&" + req.URL.RawQuery
 		}
+		filter.CheckTmz(serviceName) // 检查次数，如果超过了相关次数，重新获取服务信息
 		// TODO 整理头信息(暂时没有确定相关登录方法，暂时不写)
 	}
 }

@@ -28,6 +28,7 @@ var (
 	configClient config_client.IConfigClient // nacos服务配置中心client
 	namingClient naming_client.INamingClient // nacos服务注册与发现client
 	NacosContent string                      // nacos配置中心配置内容
+	RefreshTmz   int                         // 接口频次同步服务次数
 )
 
 /**
@@ -154,6 +155,8 @@ func ListenConfiguration() {
 						logs.Lg.Error("动态调整日志级别", errors.New("dynamic modified log level error"), logs.Desc("动态调整日志级别失败，日志级别字符不正确"))
 					}
 				}
+				// 修改路由
+				NacosGetInstancesListener(profile)
 			},
 		})
 		if err != nil {

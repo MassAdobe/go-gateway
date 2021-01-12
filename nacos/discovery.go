@@ -25,7 +25,8 @@ const (
 )
 
 var (
-	Instances sync.Map // 实体的调用地址容器
+	Instances     sync.Map // 实体的调用地址容器
+	RequestTmzMap sync.Map // 请求次数记录
 )
 
 /**
@@ -105,6 +106,7 @@ func InitNacosGetInstances() {
 	if len(InitConfiguration.Routers.LoadBalance) != 0 {
 		loadbalance.Lb = &loadbalance.LoadBalance{Type: strings.ToLower(InitConfiguration.Routers.LoadBalance)}
 	}
+	RefreshTmz = InitConfiguration.Routers.RefreshTmz // 设置刷新次数参数
 	for k, v := range InitConfiguration.Routers.Services {
 		instances, err := namingClient.SelectAllInstances(vo.SelectAllInstancesParam{
 			ServiceName: k,
@@ -113,7 +115,9 @@ func InitNacosGetInstances() {
 		if err != nil && err.Error() != INSTANCE_LIST_EMPTY {
 			logs.Lg.Error("获取实例", err, logs.Desc("获取实例失败"))
 		}
-		if len(instances) == 0 { // 如果列表为空
+		RequestTmzMap.Store(k, 0)        // 添加调用次数
+		loadbalance.Lb.Round.Store(k, 0) // 新增次数记录
+		if len(instances) == 0 {         // 如果列表为空
 			Instances.Store(k, nil)
 		} else { // 列表不为空
 			urls := make([]*url.URL, 0)
@@ -167,5 +171,41 @@ func NacosGetInstances(serviceName string) {
  * @Description: 监听获取实例
 **/
 func NacosGetInstancesListener(profile *InitNacosConfiguration) {
-
+	RefreshTmz = profile.Routers.RefreshTmz // 设置刷新次数参数
+	// 先删除不存在的
+	Instances.Range(func(key, value interface{}) bool {
+		if _, okay := profile.Routers.Services[key.(string)]; !okay {
+			Instances.Delete(key)     // 删除服务记录数据
+			RequestTmzMap.Delete(key) // 删除调用次数
+			if loadbalance.Lb.Type == loadbalance.LOAD_BALANCE_ROUND {
+				loadbalance.Lb.Round.Delete(key) // 删除轮训数据
+			}
+		}
+		return true
+	})
+	// 插入新的
+	for k, v := range profile.Routers.Services {
+		instances, err := namingClient.SelectAllInstances(vo.SelectAllInstancesParam{
+			ServiceName: k,
+			GroupName:   v, // 默认值DEFAULT_GROUP
+		})
+		if err != nil && err.Error() != INSTANCE_LIST_EMPTY {
+			logs.Lg.Error("获取实例", err, logs.Desc("获取实例失败(nacos监听)"))
+		}
+		RequestTmzMap.Store(k, 0)        // 添加调用次数
+		loadbalance.Lb.Round.Store(k, 0) // 新增次数记录
+		// 如果列表为空
+		if len(instances) == 0 {
+			Instances.Store(k, nil)
+		} else { // 列表不为空
+			urls := make([]*url.URL, 0)
+			for _, val := range instances {
+				urls = append(urls, &url.URL{
+					Scheme: DEFAULT_SCHEMA,
+					Host:   fmt.Sprintf("%s:%d", val.Ip, val.Port),
+				})
+			}
+			Instances.Store(k, urls)
+		}
+	}
 }

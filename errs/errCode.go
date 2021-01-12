@@ -12,16 +12,20 @@ package errs
 **/
 const (
 	/*error code*/
-	SuccessCode       = 0    // 成功
-	ErrSystemCode     = iota // 内部错误
-	ErrServiceNilCode        // 当前不存在该服务
-	ErrTestCode              // 测试错误
+	SuccessCode           = 0    // 成功
+	ErrSystemCode         = iota // 内部错误
+	ErrServiceNilCode            // 当前不存在该服务
+	ErrTestCode                  // 测试错误
+	ErrGatewayCode               // 网关错误
+	ErrConnectRefusedCode        // 调用服务失败
 
 	/*error desc*/
-	SuccessDesc       = "成功"
-	ErrSystemDesc     = "内部错误"
-	ErrServiceNilDesc = "当前不存在该服务"
-	ErrTestDesc       = "测试错误"
+	SuccessDesc           = "成功"
+	ErrSystemDesc         = "内部错误"
+	ErrServiceNilDesc     = "当前不存在该服务"
+	ErrTestDesc           = "测试错误"
+	ErrGatewayDesc        = "网关错误"
+	ErrConnectRefusedDesc = "调用服务失败"
 )
 
 /**
@@ -31,8 +35,10 @@ const (
 **/
 var CodeDescMap = map[int]string{
 	// 系统错误
-	SuccessCode:       SuccessDesc,
-	ErrSystemCode:     ErrSystemDesc,
-	ErrServiceNilCode: ErrServiceNilDesc,
-	ErrTestCode:       ErrTestDesc,
+	SuccessCode:           SuccessDesc,
+	ErrSystemCode:         ErrSystemDesc,
+	ErrServiceNilCode:     ErrServiceNilDesc,
+	ErrTestCode:           ErrTestDesc,
+	ErrGatewayCode:        ErrGatewayDesc,
+	ErrConnectRefusedCode: ErrConnectRefusedDesc,
 }
