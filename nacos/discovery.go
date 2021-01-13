@@ -12,6 +12,7 @@ import (
 	"github.com/MassAdobe/go-gateway/pojo"
 	"github.com/MassAdobe/go-gateway/utils"
 	"github.com/nacos-group/nacos-sdk-go/clients"
+	"github.com/nacos-group/nacos-sdk-go/model"
 	"github.com/nacos-group/nacos-sdk-go/vo"
 	"net/url"
 	"os"
@@ -208,4 +209,24 @@ func NacosGetInstancesListener(profile *InitNacosConfiguration) {
 			Instances.Store(k, urls)
 		}
 	}
+}
+
+/**
+ * @Author: MassAdobe
+ * @TIME: 2020/12/18 2:32 下午
+ * @Description: 获取服务调用参数
+**/
+func NacosGetServer(serviceName, groupName string) (instance *model.Instance, err error) {
+	instance, err = namingClient.SelectOneHealthyInstance(vo.SelectOneHealthInstanceParam{
+		ServiceName: serviceName,
+		GroupName:   groupName,           // 默认值DEFAULT_GROUP
+		Clusters:    []string{"DEFAULT"}, // 默认值DEFAULT
+	})
+	if err != nil {
+		logs.Lg.Error("nacos服务注册与发现", err, logs.Desc("获取服务失败"))
+		instance = nil
+		return
+	}
+	logs.Lg.Debug("nacos服务注册与发现", logs.Desc(fmt.Sprintf("获取服务成功: %v", instance)))
+	return
 }
