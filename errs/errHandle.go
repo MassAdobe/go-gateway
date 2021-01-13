@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	ServerError = BasicNewError(http.StatusInternalServerError, ErrSystemCode, "", nil)
+	ServerError = BasicNewError(http.StatusInternalServerError, ErrGatewayCode, "", nil)
 )
 
 /**
@@ -67,8 +67,8 @@ type Error struct {
 func OtherError(message string) *Error {
 	return &Error{
 		StatusCode: http.StatusInternalServerError,
-		Code:       ErrSystemCode,
-		Msg:        CodeDescMap[ErrSystemCode],
+		Code:       ErrGatewayCode,
+		Msg:        CodeDescMap[ErrGatewayCode],
 		Data:       message,
 	}
 }

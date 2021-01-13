@@ -6,8 +6,10 @@
 package functions
 
 import (
+	"errors"
 	"fmt"
 	"github.com/MassAdobe/go-gateway/constants"
+	"github.com/MassAdobe/go-gateway/errs"
 	"github.com/MassAdobe/go-gateway/filter"
 	"github.com/MassAdobe/go-gateway/loadbalance"
 	"github.com/MassAdobe/go-gateway/logs"
@@ -17,6 +19,10 @@ import (
 	"strings"
 )
 
+const (
+	DEFAULT_SCHEMA = "http" // 默认转发方式
+)
+
 /**
  * @Author: MassAdobe
  * @TIME: 2021/1/12 10:53 上午
@@ -24,12 +30,14 @@ import (
 **/
 func rtnDirector() func(req *http.Request) {
 	return func(req *http.Request) {
-		logs.Lg.Debug("请求")
+		logs.Lg.Debug("请求协调者", logs.Desc(fmt.Sprintf("请求来自于: %s, 请求资源: %s", req.RemoteAddr, req.RequestURI)))
 		index := strings.Index(req.RequestURI[1:], "/")
 		serviceName := req.RequestURI[1 : index+1]
 		if loadbalance.Lb.Type == "nacos" { // 基于nacos的WRR负载
+			logs.Lg.Debug("请求协调者", "当前请求使用nacos负载")
 			nacosDirector(req, serviceName)
 		} else { // 基于自研的负载
+			logs.Lg.Debug("请求协调者", "当前请求使用自研负载")
 			selfDirector(req, serviceName)
 		}
 		// TODO 整理头信息(暂时没有确定相关登录方法，暂时不写)
@@ -43,10 +51,11 @@ func rtnDirector() func(req *http.Request) {
 **/
 func nacosDirector(req *http.Request, serviceName string) {
 	if server, err := nacos.NacosGetServer(serviceName, nacos.InitConfiguration.Routers.Services[serviceName]); err != nil {
-		logs.Lg.Error("返回请求协调者", err)
+		logs.Lg.Error("返回请求协调者", err, logs.Desc(fmt.Sprintf("请求的服务名: %s", serviceName)))
+		panic(errs.NewError(errs.ErrServiceNilCode))
 	} else {
 		target := &url.URL{
-			Scheme: "http",
+			Scheme: DEFAULT_SCHEMA,
 			Host:   fmt.Sprintf("%s:%d", server.Ip, server.Port),
 		}
 		targetQuery := target.RawQuery
@@ -75,9 +84,9 @@ func selfDirector(req *http.Request, serviceName string) {
 		go nacos.NacosGetInstances(serviceName) // 请求中获取实例
 	}
 	target := loadbalance.Lb.CurUrl(serviceName, urls) // 根据当前选择，返回url
-	// TODO 待解决 如果请求为空 需要返回不能用的问题
 	if target == nil {
-		return
+		logs.Lg.Error("返回请求协调者", errors.New("no service is available"), logs.Desc(fmt.Sprintf("请求的服务名: %s", serviceName)))
+		panic(errs.NewError(errs.ErrServiceNilCode))
 	}
 	// 整理请求地址
 	targetQuery := target.RawQuery

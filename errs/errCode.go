@@ -12,20 +12,20 @@ package errs
 **/
 const (
 	/*error code*/
-	SuccessCode           = 0    // 成功
-	ErrSystemCode         = iota // 内部错误
-	ErrServiceNilCode            // 当前不存在该服务
-	ErrTestCode                  // 测试错误
-	ErrGatewayCode               // 网关错误
-	ErrConnectRefusedCode        // 调用服务失败
+	SuccessCode             = 0    // 成功
+	ErrSystemCode           = iota // 内部错误
+	ErrServiceNilCode              // 当前不存在该服务
+	ErrGatewayCode                 // 网关错误
+	ErrConnectRefusedCode          // 调用服务失败
+	ErrNacosGetInstanceCode        // 获取注册中心服务失败
 
 	/*error desc*/
-	SuccessDesc           = "成功"
-	ErrSystemDesc         = "内部错误"
-	ErrServiceNilDesc     = "当前不存在该服务"
-	ErrTestDesc           = "测试错误"
-	ErrGatewayDesc        = "网关错误"
-	ErrConnectRefusedDesc = "调用服务失败"
+	SuccessDesc             = "成功"
+	ErrSystemDesc           = "内部错误"
+	ErrServiceNilDesc       = "当前不存在该服务"
+	ErrGatewayDesc          = "网关错误"
+	ErrConnectRefusedDesc   = "调用服务失败"
+	ErrNacosGetInstanceDesc = "获取注册中心服务失败"
 )
 
 /**
@@ -35,10 +35,10 @@ const (
 **/
 var CodeDescMap = map[int]string{
 	// 系统错误
-	SuccessCode:           SuccessDesc,
-	ErrSystemCode:         ErrSystemDesc,
-	ErrServiceNilCode:     ErrServiceNilDesc,
-	ErrTestCode:           ErrTestDesc,
-	ErrGatewayCode:        ErrGatewayDesc,
-	ErrConnectRefusedCode: ErrConnectRefusedDesc,
+	SuccessCode:             SuccessDesc,
+	ErrSystemCode:           ErrSystemDesc,
+	ErrServiceNilCode:       ErrServiceNilDesc,
+	ErrGatewayCode:          ErrGatewayDesc,
+	ErrConnectRefusedCode:   ErrConnectRefusedDesc,
+	ErrNacosGetInstanceCode: ErrNacosGetInstanceDesc,
 }

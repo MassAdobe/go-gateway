@@ -7,6 +7,7 @@ package nacos
 
 import (
 	"fmt"
+	"github.com/MassAdobe/go-gateway/errs"
 	"github.com/MassAdobe/go-gateway/loadbalance"
 	"github.com/MassAdobe/go-gateway/logs"
 	"github.com/MassAdobe/go-gateway/pojo"
@@ -142,16 +143,20 @@ func InitNacosGetInstances() {
  * @Description: 请求中获取实例
 **/
 func NacosGetInstances(serviceName string) {
+	logs.Lg.Debug("获取实例", logs.Desc(fmt.Sprintf("获取的服务实例(请求中): %s", serviceName)))
 	instances, err := namingClient.SelectAllInstances(vo.SelectAllInstancesParam{
 		ServiceName: serviceName,
 		GroupName:   InitConfiguration.Routers.Services[serviceName], // 默认值DEFAULT_GROUP
 	})
 	if err != nil && err.Error() != INSTANCE_LIST_EMPTY {
-		logs.Lg.Error("获取实例", err, logs.Desc("获取实例失败(请求中)"))
+		logs.Lg.Error("获取实例", err, logs.Desc(fmt.Sprintf("获取实例失败(请求中)，服务: %s", serviceName)))
+		panic(errs.NewError(errs.ErrNacosGetInstanceCode))
 	}
 	if len(instances) == 0 { // 如果列表为空
+		logs.Lg.Debug("获取实例", logs.Desc(fmt.Sprintf("注册中心服务列表为空，服务: %s", serviceName)))
 		Instances.Store(serviceName, nil)
 	} else { // 列表不为空
+		logs.Lg.Debug("获取实例", logs.Desc(fmt.Sprintf("注册中心服务列表不为空，服务：%s", serviceName)))
 		urls := make([]*url.URL, 0)
 		for _, val := range instances {
 			urls = append(urls, &url.URL{
@@ -162,6 +167,7 @@ func NacosGetInstances(serviceName string) {
 		Instances.Store(serviceName, urls)
 	}
 	if loadbalance.Lb.Type == loadbalance.LOAD_BALANCE_ROUND {
+		logs.Lg.Debug("获取实例", logs.Desc(fmt.Sprintf("当前配置为自研强轮训，设置轮训参数，服务: %s", serviceName)))
 		loadbalance.Lb.Round.Store(serviceName, 0)
 	}
 }
@@ -172,7 +178,9 @@ func NacosGetInstances(serviceName string) {
  * @Description: 监听获取实例
 **/
 func NacosGetInstancesListener(profile *InitNacosConfiguration) {
+	logs.Lg.Debug("nacos配置文件监听", logs.Desc("路由配置变更"))
 	RefreshTmz = profile.Routers.RefreshTmz // 设置刷新次数参数
+	logs.Lg.Debug("nacos配置文件监听", logs.Desc("设置路由刷新次数参数"))
 	// 先删除不存在的
 	Instances.Range(func(key, value interface{}) bool {
 		if _, okay := profile.Routers.Services[key.(string)]; !okay {
@@ -180,6 +188,7 @@ func NacosGetInstancesListener(profile *InitNacosConfiguration) {
 			RequestTmzMap.Delete(key) // 删除调用次数
 			if loadbalance.Lb.Type == loadbalance.LOAD_BALANCE_ROUND {
 				loadbalance.Lb.Round.Delete(key) // 删除轮训数据
+				logs.Lg.Debug("nacos配置文件监听", logs.Desc(fmt.Sprintf("删除路由: %s的配置", key)))
 			}
 		}
 		return true
@@ -191,12 +200,14 @@ func NacosGetInstancesListener(profile *InitNacosConfiguration) {
 			GroupName:   v, // 默认值DEFAULT_GROUP
 		})
 		if err != nil && err.Error() != INSTANCE_LIST_EMPTY {
-			logs.Lg.Error("获取实例", err, logs.Desc("获取实例失败(nacos监听)"))
+			logs.Lg.Error("nacos配置文件监听", err, logs.Desc(fmt.Sprintf("获取路由实例失败(nacos监听)，服务: %s", k)))
+			return
 		}
 		RequestTmzMap.Store(k, 0)        // 添加调用次数
 		loadbalance.Lb.Round.Store(k, 0) // 新增次数记录
 		// 如果列表为空
 		if len(instances) == 0 {
+			logs.Lg.Debug("nacos配置文件监听", logs.Desc(fmt.Sprintf("注册中心服务列表为空，服务: %s", k)))
 			Instances.Store(k, nil)
 		} else { // 列表不为空
 			urls := make([]*url.URL, 0)
@@ -207,6 +218,7 @@ func NacosGetInstancesListener(profile *InitNacosConfiguration) {
 				})
 			}
 			Instances.Store(k, urls)
+			logs.Lg.Debug("nacos配置文件监听", logs.Desc(fmt.Sprintf("注册中心服务列表不为空，服务：%s", k)))
 		}
 	}
 }

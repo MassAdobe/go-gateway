@@ -7,6 +7,7 @@ package loadbalance
 
 import (
 	"errors"
+	"fmt"
 	"github.com/MassAdobe/go-gateway/logs"
 	"math/rand"
 	"net/url"
@@ -42,7 +43,9 @@ func (this *LoadBalance) RandomLB(urls interface{}) *url.URL {
 		logs.Lg.Error("负载均衡", errors.New("current request has not url target"))
 		return nil
 	}
-	return urls.([]*url.URL)[rand.Int()%len(urls.([]*url.URL))]
+	u := urls.([]*url.URL)[rand.Int()%len(urls.([]*url.URL))]
+	logs.Lg.Debug("负载均衡", logs.Desc(fmt.Sprintf("当前target为: %s", u.Host)))
+	return u
 }
 
 /**
@@ -60,7 +63,9 @@ func (this *LoadBalance) RoundLB(serviceName string, urls interface{}) *url.URL 
 		} else {
 			this.Round.Store(serviceName, curInt.(int)+1)
 		}
-		return urlList[curInt.(int)]
+		u := urlList[curInt.(int)]
+		logs.Lg.Debug("负载均衡", logs.Desc(fmt.Sprintf("当前target为: %s", u.Host)))
+		return u
 	}
 	logs.Lg.Error("负载均衡", errors.New("current request has not url target"))
 	return nil

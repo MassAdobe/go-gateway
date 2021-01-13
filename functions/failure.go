@@ -26,6 +26,7 @@ func rtnFailure() func(w http.ResponseWriter, r *http.Request, err error) {
 		logs.Lg.Error("返回错误回调", err)
 		// 如果是连接断掉，那么需要清理不能用的连接
 		if strings.Contains(err.Error(), "connection refused") {
+			logs.Lg.Error("返回错误回调", err, logs.Desc("当前错误是: connection refused"))
 			index := strings.Index(req.RequestURI[1:], "/")
 			serviceName := req.RequestURI[1 : index+1]
 			load, _ := nacos.Instances.Load(serviceName)
@@ -40,6 +41,7 @@ func rtnFailure() func(w http.ResponseWriter, r *http.Request, err error) {
 				}
 			}
 			nacos.Instances.Store(serviceName, newUrls)
+			logs.Lg.Debug("返回错误回调", logs.Desc("删除相关服务调用HOST"))
 			write.Header().Set(constants.CONTENT_TYPE_KEY, constants.CONTENT_TYPE_INNER)
 			marshal, _ := json.Marshal(errs.NewError(errs.ErrConnectRefusedCode))
 			write.Write(marshal)

@@ -56,8 +56,8 @@ func init() {
 func main() {
 	server := &http.Server{ // 创建服务
 		Addr:           ":" + strconv.Itoa(int(nacos.InitConfiguration.Serve.Port)),
-		ReadTimeout:    40 * time.Second,
-		WriteTimeout:   40 * time.Second,
+		ReadTimeout:    60 * time.Second,
+		WriteTimeout:   60 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 		Handler:        functions.NewMultipleHostsReverseProxy(),
 	}
