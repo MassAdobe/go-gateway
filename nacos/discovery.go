@@ -179,6 +179,9 @@ func NacosGetInstances(serviceName string) {
 **/
 func NacosGetInstancesListener(profile *InitNacosConfiguration) {
 	logs.Lg.Debug("nacos配置文件监听", logs.Desc("路由配置变更"))
+	if len(profile.Routers.LoadBalance) != 0 {
+		loadbalance.Lb.Type = profile.Routers.LoadBalance
+	}
 	RefreshTmz = profile.Routers.RefreshTmz // 设置刷新次数参数
 	logs.Lg.Debug("nacos配置文件监听", logs.Desc("设置路由刷新次数参数"))
 	// 先删除不存在的

@@ -23,9 +23,10 @@ import (
 **/
 func NewMultipleHostsReverseProxy() http.HandlerFunc {
 	var rp = &httputil.ReverseProxy{
-		Director:     rtnDirector(), // 请求协调者
-		Transport:    transport,     // 反向代理配置
-		ErrorHandler: rtnFailure(),  // 错误回调
+		Director:       rtnDirector(), // 请求协调者
+		Transport:      transport,     // 反向代理配置
+		ModifyResponse: rtnResponse(), // 更改返回内容
+		ErrorHandler:   rtnFailure(),  // 错误回调
 	}
 	return func(wr http.ResponseWriter, req *http.Request) {
 		defer func() {

@@ -41,7 +41,7 @@ serve:
 # 日志配置
 log:
   # 日志地址
-  path: '/Users/xxx/logs/golang'
+  path: '/Users/zhangzhen/logs/golang'
   # 日志级别
   level: 'debug'
 # 路由
@@ -49,11 +49,21 @@ routers:
   # 请求次数刷新服务
   refresh-tmz: 10
   # 负载均衡方法
-  load-balance: 'round'
+  load-balance: 'nacos'
   # 反向代理服务名
   services:
     'go-framework': 'go-framework'
     'go-framework-provider': 'go-framework'
+# 黑白名单(ip-address)
+bw-list:
+  # 黑名单
+  black-list:
+    - '127.0.0.1'
+    - '127.0.0.2'
+  # 白名单
+  white-list:
+    - '127.0.0.1'
+    - '127.0.0.2'
 ```
 
 #### 注：

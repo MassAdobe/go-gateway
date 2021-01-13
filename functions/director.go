@@ -34,10 +34,10 @@ func rtnDirector() func(req *http.Request) {
 		index := strings.Index(req.RequestURI[1:], "/")
 		serviceName := req.RequestURI[1 : index+1]
 		if loadbalance.Lb.Type == "nacos" { // 基于nacos的WRR负载
-			logs.Lg.Debug("请求协调者", "当前请求使用nacos负载")
+			logs.Lg.Debug("请求协调者", logs.Desc("当前请求使用nacos负载"))
 			nacosDirector(req, serviceName)
 		} else { // 基于自研的负载
-			logs.Lg.Debug("请求协调者", "当前请求使用自研负载")
+			logs.Lg.Debug("请求协调者", logs.Desc("当前请求使用自研负载"))
 			selfDirector(req, serviceName)
 		}
 		// TODO 整理头信息(暂时没有确定相关登录方法，暂时不写)
@@ -80,8 +80,12 @@ func nacosDirector(req *http.Request, serviceName string) {
 func selfDirector(req *http.Request, serviceName string) {
 	var urls interface{}
 	var okay bool
-	if urls, okay = nacos.Instances.Load(serviceName); !okay { // 如果不存在
+	if urls, okay = nacos.Instances.Load(serviceName); !okay || nil == urls { // 如果不存在
 		go nacos.NacosGetInstances(serviceName) // 请求中获取实例
+	}
+	if nil == urls {
+		logs.Lg.Error("返回请求协调者", errors.New("urls is nil"))
+		panic(errs.NewError(errs.ErrServiceNilCode))
 	}
 	target := loadbalance.Lb.CurUrl(serviceName, urls) // 根据当前选择，返回url
 	if target == nil {
