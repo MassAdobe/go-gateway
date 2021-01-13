@@ -38,6 +38,17 @@ type InitNacosConfiguration struct {
 		BlackList []string `yaml:"black-list"` // 黑名单
 		WhiteList []string `yaml:"white-list"` // 白名单
 	} `yaml:"bw-list"` // 黑白名单
+
+	GrayScale struct {
+		Open    bool     `yaml:"open"`    // 是否开启
+		Version string   `yaml:"version"` // 需要灰度版本
+		Type    string   `yaml:"type"`    // 种类：'userId':用户ID范围,'userList':用户列表,'ipList':IP列表
+		List    []string `yaml:"list"`    // 配置列表
+		Scope   struct {
+			Type string `yaml:"type"` // 种类：'great':大于,'less':小于
+			Mark string `yaml:"mark"` // 值
+		} `yaml:"scope"` // 范围
+	} `yaml:"grayscale"` // 灰度发布
 }
 
 /**

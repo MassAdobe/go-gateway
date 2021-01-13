@@ -58,16 +58,32 @@ routers:
 bw-list:
   # 黑名单
   black-list:
-    - '127.0.0.1'
+    - '127.0.0.100'
     - '127.0.0.2'
   # 白名单
   white-list:
     - '127.0.0.1'
     - '127.0.0.2'
+# 灰度发布
+grayscale:
+  # 是否开启
+  open: true
+  # 需要灰度版本
+  version: 'v1-0-0'
+  # 种类：'userScope':用户ID范围,'userList':用户列表,'ipList':IP列表
+  type: 'ipList'
+  # 配置列表
+  list:
+    - '127.0.0.1'
+    - '127.0.0.2'
+  # 范围
+  scope:
+    # 种类：'great':大于,'less':小于
+    type: 'great'
+    # 值
+    mark: '100'
 ```
-
 #### 注：
-
 + 日志级别可动态修改；
 + 路由中，`load-balance`目前可选择`① random:自研随机; ② round:自研强轮训; ③ nacos:基于nacos的WRR算法`，可动态调节；
 + 如果`load-balance`选择`① random:自研随机; ② round:自研强轮训`，则配置`refresh-tmz`会启用，这个配置为当同一个服务达到配置次数，会主动访问服务注册发现中心获取服务列表，并更新本地列表；
@@ -108,3 +124,33 @@ bw-list:
 + 白名单的优先级高于黑名单，即命中白名单，即便存在黑名单也会放行；
 + 可以动态添加或删除黑白名单；
 + 请求该网关时，nginx配置必须增加`X-Real_Ip`的配置。
+
+### 灰度发布
+```yaml
+# 灰度发布
+grayscale:
+  # 是否开启
+  open: true
+  # 需要灰度版本
+  version: 'v1-0-0'
+  # 种类：'userScope':用户ID范围,'userList':用户列表,'ipList':IP列表
+  type: 'ipList'
+  # 配置列表
+  list:
+    - '127.0.0.1'
+    - '127.0.0.2'
+  # 范围
+  scope:
+    # 种类：'great':大于,'less':小于
+    type: 'great'
+    # 值
+    mark: '100'
+```
+#### 注：
++ 可以动态调节是否开启灰度发布；
++ 一共有三种灰度方式：① userScope:用户ID范围；② userList:用户列表；③ipList:IP列表；
++ 当开启灰度后，`version、type、list或者scope`必须有值；
++ 如果是`userScope`，那么`scope`配置起作用，设定`mark`值后，如果是`type`为`great`：那么所有`userId`大于100将走进`version`设定的版本服务中；反之：如果是`type`为`less`：那么所有`userId`小于100将走进`version`设定的版本服务中；
++ 如果是`userList`，那么`list`配置起作用，所有命中`list`中的`user_id`将走进`version`设定的版本服务中；
++ 如果是`ipList`，那么`list`配置起作用，所有命中`list`中的`ip`将走进`version`设定的版本服务中；
++ 所有的参数都可以动态配置修改，热启用，毋需停止网关服务。

@@ -12,7 +12,14 @@ import (
 	"github.com/MassAdobe/go-gateway/utils"
 	"gopkg.in/yaml.v2"
 	"os"
+	"strings"
 	"sync"
+)
+
+const (
+	GRAY_SCALE_USER_ID_TYPE   = "userscope" // 灰度发布种类：用户ID范围
+	GRAY_SCALE_USER_LIST_TYPE = "userlist"  // 灰度发布种类：用户列表
+	GRAY_SCALE_IP_LIST_TYPE   = "iplist"    // 灰度发布种类：IP列表
 )
 
 var (
@@ -28,7 +35,8 @@ func InitNacosProfile() {
 	if err := yaml.Unmarshal([]byte(NacosContent), &InitConfiguration); err != nil {
 		fmt.Println(fmt.Sprintf(`{"log_level":"ERROR","time":"%s","msg":"%s","server_name":"%s","desc":"%s"}`, utils.RtnCurTime(), "配置中心", "未知", "读取nacos系统配置失败"))
 		os.Exit(1)
-	} else { // 配置黑白名单
+	} else {
+		// 配置黑白名单
 		BlackList, WhiteList = make(map[string]bool), make(map[string]bool)
 		// 初始化黑名单
 		if len(InitConfiguration.BWList.BlackList) != 0 {
@@ -52,6 +60,51 @@ func InitNacosProfile() {
 						fmt.Println(fmt.Sprintf(`{"log_level":"ERROR","time":"%s","msg":"%s","server_name":"%s","desc":"%s"}`, utils.RtnCurTime(), "配置中心", InitConfiguration.Serve.ServerName, fmt.Sprintf("当前nacos配置的白名单IP地址错误，IP为: %s", val)))
 					}
 				}
+			}
+		}
+		// 配置灰度发布
+		if InitConfiguration.GrayScale.Open && len(InitConfiguration.GrayScale.Version) != 0 && len(InitConfiguration.GrayScale.Type) != 0 {
+			switch strings.ToLower(InitConfiguration.GrayScale.Type) {
+			case GRAY_SCALE_USER_ID_TYPE: // 灰度发布种类：用户ID范围
+				PuGrayScale = &GrayScale{
+					Open:    InitConfiguration.GrayScale.Open,
+					Version: InitConfiguration.GrayScale.Version,
+					Type:    InitConfiguration.GrayScale.Type,
+					Scope: &Scope{
+						Type: InitConfiguration.GrayScale.Scope.Type,
+						Mark: InitConfiguration.GrayScale.Scope.Mark,
+					},
+				}
+				break
+			case GRAY_SCALE_USER_LIST_TYPE: // 灰度发布种类：用户列表
+				PuGrayScale = &GrayScale{
+					Open:    InitConfiguration.GrayScale.Open,
+					Version: InitConfiguration.GrayScale.Version,
+					Type:    InitConfiguration.GrayScale.Type,
+					List:    make(map[string]bool),
+				}
+				for _, val := range InitConfiguration.GrayScale.List {
+					PuGrayScale.List[val] = true
+				}
+				break
+			case GRAY_SCALE_IP_LIST_TYPE: // 灰度发布种类：IP列表
+				PuGrayScale = &GrayScale{
+					Open:    InitConfiguration.GrayScale.Open,
+					Version: InitConfiguration.GrayScale.Version,
+					Type:    InitConfiguration.GrayScale.Type,
+					List:    make(map[string]bool),
+				}
+				for _, val := range InitConfiguration.GrayScale.List {
+					PuGrayScale.List[val] = true
+				}
+				break
+			default:
+				fmt.Println(fmt.Sprintf(`{"log_level":"ERROR","time":"%s","msg":"%s","server_name":"%s","desc":"%s"}`, utils.RtnCurTime(), "配置中心", InitConfiguration.Serve.ServerName, fmt.Sprintf("当前开启的灰度发布种类错误，种类为: %s", InitConfiguration.GrayScale.Type)))
+				break
+			}
+		} else { // 关闭
+			PuGrayScale = &GrayScale{
+				Open: false,
 			}
 		}
 	}
@@ -138,5 +191,63 @@ func ModifiedBWList(profile *InitNacosConfiguration) {
 	} else {
 		logs.Lg.Debug("动态修改黑白名单", logs.Desc("当前没有配置白名单"))
 		WhiteList = make(map[string]bool)
+	}
+}
+
+/**
+ * @Author: MassAdobe
+ * @TIME: 2021/1/13 8:27 下午
+ * @Description: 动态修改灰度发布
+**/
+func ModifiedGrayScale(profile *InitNacosConfiguration) {
+	logs.Lg.Debug("动态修改灰度发布", logs.Desc("开始修改灰度发布配置"))
+	mutex.RLock()
+	defer mutex.RUnlock()
+	// 配置灰度发布
+	if profile.GrayScale.Open { // 开启
+		logs.Lg.Debug("动态修改灰度发布", logs.Desc("开启灰度发布"))
+		if len(InitConfiguration.GrayScale.Version) != 0 && len(InitConfiguration.GrayScale.Type) != 0 {
+			switch InitConfiguration.GrayScale.Type {
+			case GRAY_SCALE_USER_ID_TYPE: // 灰度发布种类：用户ID范围
+				PuGrayScale = &GrayScale{
+					Open:    InitConfiguration.GrayScale.Open,
+					Version: InitConfiguration.GrayScale.Version,
+					Type:    InitConfiguration.GrayScale.Type,
+					Scope: &Scope{
+						Type: InitConfiguration.GrayScale.Scope.Type,
+						Mark: InitConfiguration.GrayScale.Scope.Mark,
+					},
+				}
+				break
+			case GRAY_SCALE_USER_LIST_TYPE: // 灰度发布种类：用户列表
+				PuGrayScale = &GrayScale{
+					Open:    InitConfiguration.GrayScale.Open,
+					Version: InitConfiguration.GrayScale.Version,
+					Type:    InitConfiguration.GrayScale.Type,
+					List:    make(map[string]bool),
+				}
+				for _, val := range InitConfiguration.GrayScale.List {
+					PuGrayScale.List[val] = true
+				}
+				break
+			case GRAY_SCALE_IP_LIST_TYPE: // 灰度发布种类：IP列表
+				PuGrayScale = &GrayScale{
+					Open:    InitConfiguration.GrayScale.Open,
+					Version: InitConfiguration.GrayScale.Version,
+					Type:    InitConfiguration.GrayScale.Type,
+					List:    make(map[string]bool),
+				}
+				for _, val := range InitConfiguration.GrayScale.List {
+					PuGrayScale.List[val] = true
+				}
+				break
+			default:
+				fmt.Println(fmt.Sprintf(`{"log_level":"ERROR","time":"%s","msg":"%s","server_name":"%s","desc":"%s"}`, utils.RtnCurTime(), "配置中心", InitConfiguration.Serve.ServerName, fmt.Sprintf("当前开启的灰度发布种类错误，种类为: %s", InitConfiguration.GrayScale.Type)))
+				break
+			}
+		}
+	} else { // 关闭
+		logs.Lg.Debug("动态修改灰度发布", logs.Desc("关闭灰度发布"))
+		PuGrayScale = &GrayScale{Open: false}
 	}
 }

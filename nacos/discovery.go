@@ -231,12 +231,20 @@ func NacosGetInstancesListener(profile *InitNacosConfiguration) {
  * @TIME: 2020/12/18 2:32 下午
  * @Description: 获取服务调用参数
 **/
-func NacosGetServer(serviceName, groupName string) (instance *model.Instance, err error) {
-	instance, err = namingClient.SelectOneHealthyInstance(vo.SelectOneHealthInstanceParam{
-		ServiceName: serviceName,
-		GroupName:   groupName,           // 默认值DEFAULT_GROUP
-		Clusters:    []string{"DEFAULT"}, // 默认值DEFAULT
-	})
+func NacosGetServer(serviceName, groupName, clusterName string) (instance *model.Instance, err error) {
+	if len(clusterName) != 0 {
+		instance, err = namingClient.SelectOneHealthyInstance(vo.SelectOneHealthInstanceParam{
+			ServiceName: serviceName,
+			GroupName:   groupName,             // 默认值DEFAULT_GROUP
+			Clusters:    []string{clusterName}, // 默认值DEFAULT
+		})
+	} else {
+		instance, err = namingClient.SelectOneHealthyInstance(vo.SelectOneHealthInstanceParam{
+			ServiceName: serviceName,
+			GroupName:   groupName,           // 默认值DEFAULT_GROUP
+			Clusters:    []string{"DEFAULT"}, // 默认值DEFAULT
+		})
+	}
 	if err != nil {
 		logs.Lg.Error("nacos服务注册与发现", err, logs.Desc("获取服务失败"))
 		instance = nil

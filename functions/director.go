@@ -34,14 +34,55 @@ func rtnDirector() func(req *http.Request) {
 		filter.BlackWhiteList(req) // 黑白名单
 		index := strings.Index(req.RequestURI[1:], "/")
 		serviceName := req.RequestURI[1 : index+1]
-		if loadbalance.Lb.Type == "nacos" { // 基于nacos的WRR负载
-			logs.Lg.Debug("请求协调者", logs.Desc("当前请求使用nacos负载"))
-			nacosDirector(req, serviceName)
-		} else { // 基于自研的负载
-			logs.Lg.Debug("请求协调者", logs.Desc("当前请求使用自研负载"))
-			selfDirector(req, serviceName)
+		{
+			// TODO 整理头信息(暂时没有确定相关登录方法，暂时不写)
 		}
-		// TODO 整理头信息(暂时没有确定相关登录方法，暂时不写)
+		if nacos.PuGrayScale.Open { // 如果开启灰度
+			// TODO 一些校验条件
+			if loadbalance.Lb.Type == "nacos" { // 基于nacos的WRR负载 灰度
+				logs.Lg.Debug("请求协调者", logs.Desc("当前请求使用灰度发布下nacos负载"))
+				grayScaleNacosDirector(req, serviceName)
+			} else { // 基于自研的负载 灰度
+				logs.Lg.Debug("请求协调者", logs.Desc("当前请求使用灰度发布下自研负载"))
+				// TODO 自研灰度
+			}
+		} else {                                // 关闭灰度
+			if loadbalance.Lb.Type == "nacos" { // 基于nacos的WRR负载
+				logs.Lg.Debug("请求协调者", logs.Desc("当前请求使用nacos负载"))
+				nacosDirector(req, serviceName)
+			} else { // 基于自研的负载
+				logs.Lg.Debug("请求协调者", logs.Desc("当前请求使用自研负载"))
+				selfDirector(req, serviceName)
+			}
+		}
+	}
+}
+
+/**
+ * @Author: MassAdobe
+ * @TIME: 2021/1/13 8:54 下午
+ * @Description: 灰度发布下的nacos
+**/
+func grayScaleNacosDirector(req *http.Request, serviceName string) {
+	if server, err := nacos.NacosGetServer(serviceName, nacos.InitConfiguration.Routers.Services[serviceName], nacos.PuGrayScale.Version); err != nil {
+		logs.Lg.Error("返回请求协调者", err, logs.Desc(fmt.Sprintf("请求的服务名: %s", serviceName)))
+		panic(errs.NewError(errs.ErrServiceNilCode))
+	} else {
+		target := &url.URL{
+			Scheme: DEFAULT_SCHEMA,
+			Host:   fmt.Sprintf("%s:%d", server.Ip, server.Port),
+		}
+		targetQuery := target.RawQuery
+		req.URL.Scheme = target.Scheme
+		req.URL.Host = target.Host
+		req.Header.Set(constants.REQUEST_REAL_HOST, target.Host)
+		req.Header.Set(constants.REQUEST_REAL_IP, req.Header.Get(constants.REQUEST_REAL_IP))
+		req.URL.Path = singleJoiningSlash(target.Path, req.URL.Path)
+		if targetQuery == "" || req.URL.RawQuery == "" {
+			req.URL.RawQuery = targetQuery + req.URL.RawQuery
+		} else {
+			req.URL.RawQuery = targetQuery + "&" + req.URL.RawQuery
+		}
 	}
 }
 
@@ -51,7 +92,7 @@ func rtnDirector() func(req *http.Request) {
  * @Description: 基于nacos的WRR负载
 **/
 func nacosDirector(req *http.Request, serviceName string) {
-	if server, err := nacos.NacosGetServer(serviceName, nacos.InitConfiguration.Routers.Services[serviceName]); err != nil {
+	if server, err := nacos.NacosGetServer(serviceName, nacos.InitConfiguration.Routers.Services[serviceName], ""); err != nil {
 		logs.Lg.Error("返回请求协调者", err, logs.Desc(fmt.Sprintf("请求的服务名: %s", serviceName)))
 		panic(errs.NewError(errs.ErrServiceNilCode))
 	} else {

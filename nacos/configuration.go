@@ -31,6 +31,7 @@ var (
 	RefreshTmz   int                         // 接口频次同步服务次数
 	BlackList    map[string]bool             // 黑名单
 	WhiteList    map[string]bool             // 白名单
+	PuGrayScale  *GrayScale                  // 灰度发布
 )
 
 /**
@@ -181,4 +182,27 @@ func printModifiedLog(current string) {
 		logs.Desc(fmt.Sprintf("，由级别 %s 调至 %s",
 			strings.ToLower(pojo.InitConf.LogLevel), strings.ToLower(current))))
 	pojo.InitConf.LogLevel = strings.ToLower(current)
+}
+
+/**
+ * @Author: MassAdobe
+ * @TIME: 2021/1/13 8:11 下午
+ * @Description: 灰度发布结构体
+**/
+type GrayScale struct {
+	Open    bool            `yaml:"open"`    // 是否开启
+	Version string          `yaml:"version"` // 需要灰度版本
+	Type    string          `yaml:"type"`    // 种类：'userId':用户ID范围,'userList':用户列表,'ipList':IP列表
+	List    map[string]bool `yaml:"list"`    // 配置列表
+	Scope   *Scope          `yaml:"scope"`   // 范围
+}
+
+/**
+ * @Author: MassAdobe
+ * @TIME: 2021/1/13 8:12 下午
+ * @Description: 灰度发布内部范围结构体
+**/
+type Scope struct {
+	Type string `yaml:"type"` // 种类：'great':大于,'less':小于
+	Mark string `yaml:"mark"` // 值
 }
