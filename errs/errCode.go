@@ -12,20 +12,22 @@ package errs
 **/
 const (
 	/*error code*/
-	SuccessCode             = 0    // 成功
-	ErrSystemCode           = iota // 内部错误
-	ErrServiceNilCode              // 当前不存在该服务
-	ErrGatewayCode                 // 网关错误
-	ErrConnectRefusedCode          // 调用服务失败
-	ErrNacosGetInstanceCode        // 获取注册中心服务失败
+	ErrSystemCode           = 900 + iota // 内部错误
+	ErrServiceNilCode                    // 当前不存在该服务
+	ErrGatewayCode                       // 网关错误
+	ErrConnectRefusedCode                // 调用服务失败
+	ErrNacosGetInstanceCode              // 获取注册中心服务失败
+	ErrBlackListCode                     // 命中黑名单，非法请求
+	ErrRealIpCode                        // 当前客户端请求IP错误，非法请求
 
 	/*error desc*/
-	SuccessDesc             = "成功"
 	ErrSystemDesc           = "内部错误"
 	ErrServiceNilDesc       = "当前不存在该服务"
 	ErrGatewayDesc          = "网关错误"
 	ErrConnectRefusedDesc   = "调用服务失败"
 	ErrNacosGetInstanceDesc = "获取注册中心服务失败"
+	ErrBlackListDesc        = "命中黑名单，非法请求"
+	ErrRealIpDesc           = "当前客户端请求IP错误，非法请求"
 )
 
 /**
@@ -35,10 +37,11 @@ const (
 **/
 var CodeDescMap = map[int]string{
 	// 系统错误
-	SuccessCode:             SuccessDesc,
 	ErrSystemCode:           ErrSystemDesc,
 	ErrServiceNilCode:       ErrServiceNilDesc,
 	ErrGatewayCode:          ErrGatewayDesc,
 	ErrConnectRefusedCode:   ErrConnectRefusedDesc,
 	ErrNacosGetInstanceCode: ErrNacosGetInstanceDesc,
+	ErrBlackListCode:        ErrBlackListDesc,
+	ErrRealIpCode:           ErrRealIpDesc,
 }

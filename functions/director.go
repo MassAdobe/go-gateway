@@ -31,6 +31,7 @@ const (
 func rtnDirector() func(req *http.Request) {
 	return func(req *http.Request) {
 		logs.Lg.Debug("请求协调者", logs.Desc(fmt.Sprintf("请求来自于: %s, 请求资源: %s", req.RemoteAddr, req.RequestURI)))
+		filter.BlackWhiteList(req) // 黑白名单
 		index := strings.Index(req.RequestURI[1:], "/")
 		serviceName := req.RequestURI[1 : index+1]
 		if loadbalance.Lb.Type == "nacos" { // 基于nacos的WRR负载
@@ -62,7 +63,7 @@ func nacosDirector(req *http.Request, serviceName string) {
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
 		req.Header.Set(constants.REQUEST_REAL_HOST, target.Host)
-		req.Header.Set(constants.REQUEST_REAL_IP, req.RemoteAddr)
+		req.Header.Set(constants.REQUEST_REAL_IP, req.Header.Get(constants.REQUEST_REAL_IP))
 		req.URL.Path = singleJoiningSlash(target.Path, req.URL.Path)
 		if targetQuery == "" || req.URL.RawQuery == "" {
 			req.URL.RawQuery = targetQuery + req.URL.RawQuery
@@ -97,7 +98,7 @@ func selfDirector(req *http.Request, serviceName string) {
 	req.URL.Scheme = target.Scheme
 	req.URL.Host = target.Host
 	req.Header.Set(constants.REQUEST_REAL_HOST, target.Host)
-	req.Header.Set(constants.REQUEST_REAL_IP, req.RemoteAddr)
+	req.Header.Set(constants.REQUEST_REAL_IP, req.Header.Get(constants.REQUEST_REAL_IP))
 	req.URL.Path = singleJoiningSlash(target.Path, req.URL.Path)
 	if targetQuery == "" || req.URL.RawQuery == "" {
 		req.URL.RawQuery = targetQuery + req.URL.RawQuery

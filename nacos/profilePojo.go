@@ -33,6 +33,11 @@ type InitNacosConfiguration struct {
 		LoadBalance string            `yaml:"load-balance"` // 负载均衡方法
 		Services    map[string]string `yaml:"services"`     // 反向代理服务名和组名
 	} `yaml:"routers"` // 路由
+
+	BWList struct {
+		BlackList []string `yaml:"black-list"` // 黑名单
+		WhiteList []string `yaml:"white-list"` // 白名单
+	} `yaml:"bw-list"` // 黑白名单
 }
 
 /**

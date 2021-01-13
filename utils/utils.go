@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net"
 	"os/exec"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -94,4 +95,18 @@ func getIpFromAddr(addr net.Addr) net.IP {
 		return nil // not an ipv4 address
 	}
 	return ip
+}
+
+/**
+ * @Author: MassAdobe
+ * @TIME: 2021/1/13 6:02 下午
+ * @Description: 校验IP地址是否正确
+**/
+func CheckIp(ip string) bool {
+	addr := strings.Trim(ip, " ")
+	regStr := `^(([1-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.)(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){2}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`
+	if match, _ := regexp.MatchString(regStr, addr); match {
+		return true
+	}
+	return false
 }

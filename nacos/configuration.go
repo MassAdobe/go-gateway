@@ -29,6 +29,8 @@ var (
 	namingClient naming_client.INamingClient // nacos服务注册与发现client
 	NacosContent string                      // nacos配置中心配置内容
 	RefreshTmz   int                         // 接口频次同步服务次数
+	BlackList    map[string]bool             // 黑名单
+	WhiteList    map[string]bool             // 白名单
 )
 
 /**
@@ -157,6 +159,8 @@ func ListenConfiguration() {
 				}
 				// 修改路由
 				NacosGetInstancesListener(profile)
+				// 动态修改黑白名单
+				ModifiedBWList(profile)
 			},
 		})
 		if err != nil {
