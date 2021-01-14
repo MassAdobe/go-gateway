@@ -46,6 +46,8 @@ log:
   level: 'debug'
 # 路由
 routers:
+  # 版本
+  version: 'v1-0-0'
   # 请求次数刷新服务
   refresh-tmz: 10
   # 负载均衡方法
@@ -69,7 +71,7 @@ grayscale:
   # 是否开启
   open: true
   # 需要灰度版本
-  version: 'v1-0-0'
+  version: 'v1-0-1'
   # 种类：'userScope':用户ID范围,'userList':用户列表,'ipList':IP列表
   type: 'ipList'
   # 配置列表
@@ -82,12 +84,14 @@ grayscale:
     type: 'great'
     # 值
     mark: '100'
+
 ```
 #### 注：
 + 日志级别可动态修改；
 + 路由中，`load-balance`目前可选择`① random:自研随机; ② round:自研强轮训; ③ nacos:基于nacos的WRR算法`，可动态调节；
 + 如果`load-balance`选择`① random:自研随机; ② round:自研强轮训`，则配置`refresh-tmz`会启用，这个配置为当同一个服务达到配置次数，会主动访问服务注册发现中心获取服务列表，并更新本地列表；
 + 当网关转发请求，并请求到下层服务时`connection refused`的时候，网关会主动删除当前服务，待到`refresh-tmz`时会主动重新校准服务列表；
++ 路由中，`version`配置为当前反向代理所有服务的版本号；
 + nacos的WRR算法：`① 从权重中选出最大的，减去总权重；② 然后再给每个权重加上自身权重初始值； ③ 再次轮训，直到权重为0，确定序列`；
 
 | 请求编号 | 选前权重值 | 被选中server | 选后权重值 |
@@ -150,7 +154,19 @@ grayscale:
 + 可以动态调节是否开启灰度发布；
 + 一共有三种灰度方式：① userScope:用户ID范围；② userList:用户列表；③ipList:IP列表；
 + 当开启灰度后，`version、type、list或者scope`必须有值；
-+ 如果是`userScope`，那么`scope`配置起作用，设定`mark`值后，如果是`type`为`great`：那么所有`userId`大于100将走进`version`设定的版本服务中；反之：如果是`type`为`less`：那么所有`userId`小于100将走进`version`设定的版本服务中；
++ 如果是`userScope`，那么`scope`配置起作用，设定`mark`值后，例如设置为100：`mark: 100`，如果是`type`为`great`：那么所有`userId`大于100的请求将走进`version`设定的版本服务中；反之：如果是`type`为`less`：那么所有`userId`小于100的请求将走进`version`设定的版本服务中；
 + 如果是`userList`，那么`list`配置起作用，所有命中`list`中的`user_id`将走进`version`设定的版本服务中；
 + 如果是`ipList`，那么`list`配置起作用，所有命中`list`中的`ip`将走进`version`设定的版本服务中；
-+ 所有的参数都可以动态配置修改，热启用，毋需停止网关服务。
++ 所有的参数都可以动态配置修改，热启用，毋需停止网关服务；
++ 当AB测试完毕，和灰度发布完毕，需要把全局的服务统一成同一个版本后，把网关的值调整为正确的配置，关闭灰度发布：`grayscale.open = false`，修改`routers.version`为最新的版本号；
++ 基于`userScope`和`userId`的，因为没有确定登录方式，暂未实现。
+
+---
+
+## 网关启动流程
+![gateway-start](./doc/gateway-start.png)
+
+---
+
+## 网关请求流程
+![gateway-request](./doc/gateway-request.png)

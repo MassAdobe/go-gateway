@@ -8,6 +8,7 @@ package nacos
 import (
 	"errors"
 	"fmt"
+	"github.com/MassAdobe/go-gateway/loadbalance"
 	"github.com/MassAdobe/go-gateway/logs"
 	"github.com/MassAdobe/go-gateway/utils"
 	"gopkg.in/yaml.v2"
@@ -68,10 +69,10 @@ func InitNacosProfile() {
 			case GRAY_SCALE_USER_ID_TYPE: // 灰度发布种类：用户ID范围
 				PuGrayScale = &GrayScale{
 					Open:    InitConfiguration.GrayScale.Open,
-					Version: InitConfiguration.GrayScale.Version,
-					Type:    InitConfiguration.GrayScale.Type,
+					Version: strings.ToLower(InitConfiguration.GrayScale.Version),
+					Type:    strings.ToLower(InitConfiguration.GrayScale.Type),
 					Scope: &Scope{
-						Type: InitConfiguration.GrayScale.Scope.Type,
+						Type: strings.ToLower(InitConfiguration.GrayScale.Scope.Type),
 						Mark: InitConfiguration.GrayScale.Scope.Mark,
 					},
 				}
@@ -79,8 +80,8 @@ func InitNacosProfile() {
 			case GRAY_SCALE_USER_LIST_TYPE: // 灰度发布种类：用户列表
 				PuGrayScale = &GrayScale{
 					Open:    InitConfiguration.GrayScale.Open,
-					Version: InitConfiguration.GrayScale.Version,
-					Type:    InitConfiguration.GrayScale.Type,
+					Version: strings.ToLower(InitConfiguration.GrayScale.Version),
+					Type:    strings.ToLower(InitConfiguration.GrayScale.Type),
 					List:    make(map[string]bool),
 				}
 				for _, val := range InitConfiguration.GrayScale.List {
@@ -90,12 +91,16 @@ func InitNacosProfile() {
 			case GRAY_SCALE_IP_LIST_TYPE: // 灰度发布种类：IP列表
 				PuGrayScale = &GrayScale{
 					Open:    InitConfiguration.GrayScale.Open,
-					Version: InitConfiguration.GrayScale.Version,
-					Type:    InitConfiguration.GrayScale.Type,
+					Version: strings.ToLower(InitConfiguration.GrayScale.Version),
+					Type:    strings.ToLower(InitConfiguration.GrayScale.Type),
 					List:    make(map[string]bool),
 				}
 				for _, val := range InitConfiguration.GrayScale.List {
-					PuGrayScale.List[val] = true
+					if utils.CheckIp(val) {
+						PuGrayScale.List[val] = true
+						continue
+					}
+					fmt.Println(fmt.Sprintf(`{"log_level":"ERROR","time":"%s","msg":"%s","server_name":"%s","desc":"%s"}`, utils.RtnCurTime(), "配置中心", InitConfiguration.Serve.ServerName, fmt.Sprintf("当前开启的灰度发布配置的IP地址有误，IP: %s", val)))
 				}
 				break
 			default:
@@ -150,12 +155,13 @@ func ModifiedBWList(profile *InitNacosConfiguration) {
 		}
 		// 再增加
 		for _, val := range profile.BWList.BlackList {
-			if utils.CheckIp(val) { // 校验配置的IP地址是否正确
-				if _, okay := BlackList[val]; !okay {
+			if _, okay := BlackList[val]; !okay {
+				if utils.CheckIp(val) { // 校验配置的IP地址是否正确
 					BlackList[val] = true
+				} else { // 不正确 不添加
+					logs.Lg.Error("动态修改黑白名单", errors.New("create black list ip error"), logs.Desc(fmt.Sprintf("当前新增的黑名单IP地址错误，IP为: %s", val)))
 				}
-			} else { // 不正确 不添加
-				logs.Lg.Error("动态修改黑白名单", errors.New("create black list ip error"), logs.Desc(fmt.Sprintf("当前新增的黑名单IP地址错误，IP为: %s", val)))
+				continue
 			}
 		}
 	} else {
@@ -183,9 +189,10 @@ func ModifiedBWList(profile *InitNacosConfiguration) {
 			if _, okay := WhiteList[val]; !okay {
 				if utils.CheckIp(val) { // 校验配置的IP地址是否正确
 					WhiteList[val] = true
+				} else { // 不正确 不添加
+					logs.Lg.Error("动态修改黑白名单", errors.New("create white list ip error"), logs.Desc(fmt.Sprintf("当前新增的白名单IP地址错误，IP为: %s", val)))
 				}
-			} else { // 不正确 不添加
-				logs.Lg.Error("动态修改黑白名单", errors.New("create white list ip error"), logs.Desc(fmt.Sprintf("当前新增的白名单IP地址错误，IP为: %s", val)))
+				continue
 			}
 		}
 	} else {
@@ -206,48 +213,55 @@ func ModifiedGrayScale(profile *InitNacosConfiguration) {
 	// 配置灰度发布
 	if profile.GrayScale.Open { // 开启
 		logs.Lg.Debug("动态修改灰度发布", logs.Desc("开启灰度发布"))
-		if len(InitConfiguration.GrayScale.Version) != 0 && len(InitConfiguration.GrayScale.Type) != 0 {
-			switch InitConfiguration.GrayScale.Type {
+		if len(profile.GrayScale.Version) != 0 && len(profile.GrayScale.Type) != 0 {
+			switch strings.ToLower(profile.GrayScale.Type) {
 			case GRAY_SCALE_USER_ID_TYPE: // 灰度发布种类：用户ID范围
 				PuGrayScale = &GrayScale{
-					Open:    InitConfiguration.GrayScale.Open,
-					Version: InitConfiguration.GrayScale.Version,
-					Type:    InitConfiguration.GrayScale.Type,
+					Open:    profile.GrayScale.Open,
+					Version: strings.ToLower(profile.GrayScale.Version),
+					Type:    strings.ToLower(profile.GrayScale.Type),
 					Scope: &Scope{
-						Type: InitConfiguration.GrayScale.Scope.Type,
-						Mark: InitConfiguration.GrayScale.Scope.Mark,
+						Type: strings.ToLower(profile.GrayScale.Scope.Type),
+						Mark: profile.GrayScale.Scope.Mark,
 					},
 				}
 				break
 			case GRAY_SCALE_USER_LIST_TYPE: // 灰度发布种类：用户列表
 				PuGrayScale = &GrayScale{
-					Open:    InitConfiguration.GrayScale.Open,
-					Version: InitConfiguration.GrayScale.Version,
-					Type:    InitConfiguration.GrayScale.Type,
+					Open:    profile.GrayScale.Open,
+					Version: strings.ToLower(profile.GrayScale.Version),
+					Type:    strings.ToLower(profile.GrayScale.Type),
 					List:    make(map[string]bool),
 				}
-				for _, val := range InitConfiguration.GrayScale.List {
+				for _, val := range profile.GrayScale.List {
 					PuGrayScale.List[val] = true
 				}
 				break
 			case GRAY_SCALE_IP_LIST_TYPE: // 灰度发布种类：IP列表
 				PuGrayScale = &GrayScale{
-					Open:    InitConfiguration.GrayScale.Open,
-					Version: InitConfiguration.GrayScale.Version,
-					Type:    InitConfiguration.GrayScale.Type,
+					Open:    profile.GrayScale.Open,
+					Version: strings.ToLower(profile.GrayScale.Version),
+					Type:    strings.ToLower(profile.GrayScale.Type),
 					List:    make(map[string]bool),
 				}
-				for _, val := range InitConfiguration.GrayScale.List {
-					PuGrayScale.List[val] = true
+				for _, val := range profile.GrayScale.List {
+					if utils.CheckIp(val) {
+						PuGrayScale.List[val] = true
+						continue
+					}
+					logs.Lg.Error("动态修改灰度发布", errors.New("gray scale ip list error"), logs.Desc(fmt.Sprintf("修改的IP地址非法，IP: %s", val)))
 				}
 				break
 			default:
-				fmt.Println(fmt.Sprintf(`{"log_level":"ERROR","time":"%s","msg":"%s","server_name":"%s","desc":"%s"}`, utils.RtnCurTime(), "配置中心", InitConfiguration.Serve.ServerName, fmt.Sprintf("当前开启的灰度发布种类错误，种类为: %s", InitConfiguration.GrayScale.Type)))
-				break
+				logs.Lg.Error("动态修改灰度发布", errors.New("gray scale type error"), logs.Desc(fmt.Sprintf("当前开启的灰度发布种类错误，种类为: %s", profile.GrayScale.Type)))
 			}
 		}
 	} else { // 关闭
 		logs.Lg.Debug("动态修改灰度发布", logs.Desc("关闭灰度发布"))
 		PuGrayScale = &GrayScale{Open: false}
+		// 如果没有配置，直接初始化所有灰度配置
+		loadbalance.Lb.GrayScaleRound = sync.Map{}
+		GrayScaleRequestTmzMap = sync.Map{}
+		GrayScaleInstances = sync.Map{}
 	}
 }

@@ -8,12 +8,10 @@ package filter
 import (
 	"errors"
 	"fmt"
-	"github.com/MassAdobe/go-gateway/constants"
 	"github.com/MassAdobe/go-gateway/errs"
 	"github.com/MassAdobe/go-gateway/logs"
 	"github.com/MassAdobe/go-gateway/nacos"
 	"github.com/MassAdobe/go-gateway/utils"
-	"net/http"
 )
 
 /**
@@ -21,8 +19,7 @@ import (
  * @TIME: 2021/1/13 5:40 下午
  * @Description: 黑白名单
 **/
-func BlackWhiteList(req *http.Request) {
-	realIp := req.Header.Get(constants.REQUEST_REAL_IP)
+func BlackWhiteList(realIp string) {
 	if len(realIp) == 0 {
 		logs.Lg.Error("黑白名单", errors.New("real ip is nil error"), logs.Desc("当前请求的客户端真实IP为空"))
 		panic(errs.NewError(errs.ErrRealIpCode))

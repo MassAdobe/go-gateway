@@ -29,6 +29,7 @@ type InitNacosConfiguration struct {
 	} `yaml:"log"`
 
 	Routers struct {
+		Version     string            `yaml:"version"`      // 版本
 		RefreshTmz  int               `yaml:"refresh-tmz"`  // 请求次数刷新服务
 		LoadBalance string            `yaml:"load-balance"` // 负载均衡方法
 		Services    map[string]string `yaml:"services"`     // 反向代理服务名和组名
