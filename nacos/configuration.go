@@ -137,26 +137,34 @@ func ListenConfiguration() {
 					case "debug":
 						logs.Lg.Level.SetLevel(zap.DebugLevel)
 						printModifiedLog(profile.Log.Level)
+						break
 					case "info":
 						logs.Lg.Level.SetLevel(zap.InfoLevel)
 						printModifiedLog(profile.Log.Level)
+						break
 					case "warn":
 						logs.Lg.Level.SetLevel(zap.WarnLevel)
 						printModifiedLog(profile.Log.Level)
+						break
 					case "error":
 						logs.Lg.Level.SetLevel(zap.ErrorLevel)
 						printModifiedLog(profile.Log.Level)
+						break
 					case "dpanic":
 						logs.Lg.Level.SetLevel(zap.DPanicLevel)
 						printModifiedLog(profile.Log.Level)
+						break
 					case "panic":
 						logs.Lg.Level.SetLevel(zap.PanicLevel)
 						printModifiedLog(profile.Log.Level)
+						break
 					case "fatal":
 						logs.Lg.Level.SetLevel(zap.FatalLevel)
 						printModifiedLog(profile.Log.Level)
+						break
 					default:
 						logs.Lg.Error("动态调整日志级别", errors.New("dynamic modified log level error"), logs.Desc("动态调整日志级别失败，日志级别字符不正确"))
+						break
 					}
 				}
 				// 动态修改灰度发布
