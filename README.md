@@ -152,7 +152,7 @@ grayscale:
 ```
 #### 注：
 + 可以动态调节是否开启灰度发布；
-+ 一共有三种灰度方式：① userScope:用户ID范围；② userList:用户列表；③ipList:IP列表；
++ 一共有三种灰度方式：① userScope:用户ID范围；② userList:用户列表；③ ipList:IP列表；
 + 当开启灰度后，`version、type、list或者scope`必须有值；
 + 如果是`userScope`，那么`scope`配置起作用，设定`mark`值后，例如设置为100：`mark: 100`，如果是`type`为`great`：那么所有`userId`大于100的请求将走进`version`设定的版本服务中；反之：如果是`type`为`less`：那么所有`userId`小于100的请求将走进`version`设定的版本服务中；
 + 如果是`userList`，那么`list`配置起作用，所有命中`list`中的`user_id`将走进`version`设定的版本服务中；
