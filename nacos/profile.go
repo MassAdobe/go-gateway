@@ -15,6 +15,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 )
 
 const (
@@ -110,6 +111,18 @@ func InitNacosProfile() {
 		} else { // 关闭
 			PuGrayScale = &GrayScale{
 				Open: false,
+			}
+		}
+		// 获取强制下线信息
+		if len(InitConfiguration.AccessToken.ForceLoginOut) != 0 {
+			ForceLoginOut = make(map[int64]time.Time)
+			for _, v := range InitConfiguration.AccessToken.ForceLoginOut {
+				if v == -1 { // 如果存在全局配置
+					ForceLoginOut = make(map[int64]time.Time)
+					ForceLoginOut[-1] = time.Now()
+					break
+				}
+				ForceLoginOut[v] = time.Now()
 			}
 		}
 	}
@@ -263,5 +276,25 @@ func ModifiedGrayScale(profile *InitNacosConfiguration) {
 		loadbalance.Lb.GrayScaleRound = sync.Map{}
 		GrayScaleRequestTmzMap = sync.Map{}
 		GrayScaleInstances = sync.Map{}
+	}
+}
+
+/**
+ * @Author: MassAdobe
+ * @TIME: 2021/1/18 11:22 上午
+ * @Description: 动态修改强制下线
+**/
+func ModifiedForceLoginOut(profile *InitNacosConfiguration) {
+	ForceLoginOut = make(map[int64]time.Time)
+	// 获取强制下线信息
+	if len(InitConfiguration.AccessToken.ForceLoginOut) != 0 {
+		for _, v := range InitConfiguration.AccessToken.ForceLoginOut {
+			if v == -1 { // 如果存在全局配置
+				ForceLoginOut = make(map[int64]time.Time)
+				ForceLoginOut[-1] = time.Now()
+				break
+			}
+			ForceLoginOut[v] = time.Now()
+		}
 	}
 }

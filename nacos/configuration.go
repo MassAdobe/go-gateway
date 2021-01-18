@@ -19,20 +19,22 @@ import (
 	"go.uber.org/zap"
 	"os"
 	"strings"
+	"time"
 )
 
 var (
-	serverCs     []constant.ServerConfig     // nacos的server配置
-	clientC      constant.ClientConfig       // nacos的client配置
-	profileC     vo.ConfigParam              // nacos的配置
-	configClient config_client.IConfigClient // nacos服务配置中心client
-	namingClient naming_client.INamingClient // nacos服务注册与发现client
-	NacosContent string                      // nacos配置中心配置内容
-	Version      string                      // 路由的版本信息
-	RefreshTmz   int                         // 接口频次同步服务次数
-	BlackList    map[string]bool             // 黑名单
-	WhiteList    map[string]bool             // 白名单
-	PuGrayScale  *GrayScale                  // 灰度发布
+	serverCs      []constant.ServerConfig     // nacos的server配置
+	clientC       constant.ClientConfig       // nacos的client配置
+	profileC      vo.ConfigParam              // nacos的配置
+	configClient  config_client.IConfigClient // nacos服务配置中心client
+	namingClient  naming_client.INamingClient // nacos服务注册与发现client
+	NacosContent  string                      // nacos配置中心配置内容
+	Version       string                      // 路由的版本信息
+	RefreshTmz    int                         // 接口频次同步服务次数
+	BlackList     map[string]bool             // 黑名单
+	WhiteList     map[string]bool             // 白名单
+	PuGrayScale   *GrayScale                  // 灰度发布
+	ForceLoginOut map[int64]time.Time         // 强制下线配置表
 )
 
 /**
@@ -175,6 +177,8 @@ func ListenConfiguration() {
 				NacosGetInstancesListener(profile)
 				// 动态修改黑白名单
 				ModifiedBWList(profile)
+				// 动态修改强制下线配置
+				ModifiedForceLoginOut(profile)
 			},
 		})
 		if err != nil {
@@ -217,5 +221,5 @@ type GrayScale struct {
 **/
 type Scope struct {
 	Type string `yaml:"type"` // 种类：'great':大于,'less':小于
-	Mark string `yaml:"mark"` // 值
+	Mark int64  `yaml:"mark"` // 值
 }

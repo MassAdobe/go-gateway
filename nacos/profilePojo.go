@@ -47,14 +47,15 @@ type InitNacosConfiguration struct {
 		List    []string `yaml:"list"`    // 配置列表
 		Scope   struct {
 			Type string `yaml:"type"` // 种类：'great':大于,'less':小于
-			Mark string `yaml:"mark"` // 值
+			Mark int64  `yaml:"mark"` // 值
 		} `yaml:"scope"` // 范围
 	} `yaml:"grayscale"` // 灰度发布
 
 	AccessToken struct {
-		Verify  string `yaml:"verify"`  // 校验字段
-		Refresh int64  `yaml:"refresh"` // 更新token的时间(天)
-		Expire  int64  `yaml:"expire"`  // 过期时间(天)
+		Verify        string  `yaml:"verify"`          // 校验字段
+		Refresh       int64   `yaml:"refresh"`         // 更新token的时间(天)
+		Expire        int64   `yaml:"expire"`          // 过期时间(天)
+		ForceLoginOut []int64 `yaml:"force-login-out"` // 强制下线(用户ID) 如果用户ID为-1，则为全局强制下线
 	} `yaml:"access-token"` // 用户携带token
 }
 

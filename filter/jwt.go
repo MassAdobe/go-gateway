@@ -25,8 +25,8 @@ import (
  * @TIME: 2021/1/15 1:59 下午
  * @Description: 校验jwt的token
 **/
-func VerifiedJWT(req *http.Request) {
-	token := decodeToken(req.Header.Get(constants.TOKEN_KEY))
+func VerifiedJWT(req *http.Request) (*pojo.RequestUser, string) {
+	token, lgTm := decodeToken(req.Header.Get(constants.TOKEN_KEY)), ""
 	if len(token) != 0 {
 		if tkn, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -59,7 +59,8 @@ func VerifiedJWT(req *http.Request) {
 				// login_tm
 				if loginTm, okay := claims[constants.TOKEN_LOGIN_TM_KEY]; okay {
 					logs.Lg.Debug("jwt-token", logs.Desc(fmt.Sprintf("login_tm: %s", loginTm.(string))))
-					differ := utils.GetHourDiffer(loginTm.(string))
+					lgTm = loginTm.(string)
+					differ := utils.GetHourDiffer(lgTm)
 					// 大于token更新时间，小于过期时间，更新token
 					if nacos.InitConfiguration.AccessToken.Refresh <= differ && differ <= nacos.InitConfiguration.AccessToken.Expire {
 						logs.Lg.Debug("jwt-token", logs.Desc("当前token时间可以更新token"))
@@ -82,12 +83,13 @@ func VerifiedJWT(req *http.Request) {
 				} else {
 					req.Header.Set(constants.REQUEST_USER_KEY, string(user))
 				}
-				return
+				return requestUser, lgTm
 			}
 			logs.Lg.Error("jwt-token", errors.New("token verified error"), logs.Desc("校验token错误"))
 		}
 	}
 	logs.Lg.Debug("jwt-token", logs.Desc(fmt.Sprintf("请求: %s, 来源: %s, 不存在access-token", req.RequestURI, req.Header.Get(constants.REQUEST_REAL_IP))))
+	return nil, ""
 }
 
 /**

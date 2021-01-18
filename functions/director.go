@@ -14,13 +14,17 @@ import (
 	"github.com/MassAdobe/go-gateway/loadbalance"
 	"github.com/MassAdobe/go-gateway/logs"
 	"github.com/MassAdobe/go-gateway/nacos"
+	"github.com/MassAdobe/go-gateway/pojo"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
 const (
-	DEFAULT_SCHEMA = "http" // 默认转发方式
+	DEFAULT_SCHEMA              = "http"  // 默认转发方式
+	GRAY_SCALE_USER_SCOPE_GREAT = "great" // 用户范围灰度：大于
+	GRAY_SCALE_USER_SCOPE_LESS  = "less"  // 用户范围灰度：小于
 )
 
 /**
@@ -33,12 +37,10 @@ func rtnDirector() func(req *http.Request) {
 		logs.Lg.Debug("请求协调者", logs.Desc(fmt.Sprintf("请求来自于: %s, 请求资源: %s", req.RemoteAddr, req.RequestURI)))
 		realIp := req.Header.Get(constants.REQUEST_REAL_IP) // 获取真实IP
 		filter.BlackWhiteList(realIp)                       // 黑白名单
-		filter.VerifiedJWT(req)                             // 校验jwt的token
+		user, lgTm := filter.VerifiedJWT(req)               // 校验jwt的token(同时返回用户信息)
+		filter.ForceLoginOut(user, lgTm)                    // 强制下线
 		index := strings.Index(req.RequestURI[1:], "/")
 		serviceName := req.RequestURI[1 : index+1]
-		{
-			// TODO 整理头信息(暂时没有确定相关登录方法，暂时不写)
-		}
 		// 灰度开启情况
 		if nacos.PuGrayScale.Open { // 如果开启灰度
 			switch nacos.PuGrayScale.Type {
@@ -49,13 +51,22 @@ func rtnDirector() func(req *http.Request) {
 				}
 				goto Loop // 不存在于灰度发布的列表中 走正常路由
 			case nacos.GRAY_SCALE_USER_LIST_TYPE: // 用户列表
-				// TODO 验证条件
-				goto Loop
-				break
+				if user != nil { // 当前用户不为空
+					userId := strconv.FormatInt(user.UserId, 10)
+					// 存在与灰度发布的列表中 直接走灰度的路由
+					if _, okay := nacos.PuGrayScale.List[userId]; okay {
+						break
+					}
+				}
+				goto Loop // 不存在于灰度发布的列表中 走正常路由
 			case nacos.GRAY_SCALE_USER_ID_TYPE: // 用户范围
-				// TODO 验证条件
-				goto Loop
-				break
+				// 存在与灰度发布的用户范围中 直接走灰度的路由
+				if userScopeCheck(user) {
+					break
+				}
+				goto Loop // 不存在于灰度发布的列表中 走正常路由
+			default: // 默认不走灰度
+				goto Loop // 不存在于灰度发布的列表中 走正常路由
 			}
 			if loadbalance.Lb.Type == "nacos" { // 基于nacos的WRR负载 灰度
 				logs.Lg.Debug("请求协调者", logs.Desc("当前请求使用灰度发布下nacos负载"))
@@ -78,6 +89,31 @@ func rtnDirector() func(req *http.Request) {
 			}
 		}
 	}
+}
+
+/**
+ * @Author: MassAdobe
+ * @TIME: 2021/1/18 10:22 上午
+ * @Description: 校验用户scope的灰度
+**/
+func userScopeCheck(user *pojo.RequestUser) bool {
+	if user != nil {
+		switch strings.ToLower(nacos.PuGrayScale.Scope.Type) {
+		case GRAY_SCALE_USER_SCOPE_GREAT: // 用户范围灰度：大于
+			if user.UserId >= nacos.PuGrayScale.Scope.Mark {
+				return true
+			}
+			break
+		case GRAY_SCALE_USER_SCOPE_LESS: // 用户范围灰度：小于
+			if user.UserId <= nacos.PuGrayScale.Scope.Mark {
+				return true
+			}
+			break
+		default: // 默认不走灰度
+			break
+		}
+	}
+	return false
 }
 
 /**

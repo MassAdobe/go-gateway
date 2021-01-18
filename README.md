@@ -159,9 +159,9 @@ grayscale:
 + 如果是`ipList`，那么`list`配置起作用，所有命中`list`中的`ip`将走进`version`设定的版本服务中；
 + 所有的参数都可以动态配置修改，热启用，毋需停止网关服务；
 + 当AB测试完毕，和灰度发布完毕，需要把全局的服务统一成同一个版本后，把网关的值调整为正确的配置，关闭灰度发布：`grayscale.open = false`，修改`routers.version`为最新的版本号；
-+ 基于`userScope`和`userId`的，因为没有确定登录方式，暂未实现。
++ 如果接口请求中不含有`access-token`，那么关于用户的灰度没有作用，例如登录接口；
 
-## 更新access-token
+## 更新access-token和强制下线
 ```yaml
 # 用户携带token
 access-token:
@@ -171,13 +171,21 @@ access-token:
   refresh: 20
   # 过期token的时间(天)
   expire: 30
+  # 强制下线(用户ID) 如果用户ID为-1，则为全局强制下线
+  force-login-out:
+    - -1
+    - 1000
 ```
 + 请求中如果有access-token，会根据加解密获取token信息，带入至go-gin的框架中；
 + 会根据nacos中配置`verify`校验access-token的正确性；
 + 会根据`refresh`时间更新access-token；
 + 会根据`expire`过期access-token；
 + 如果access-token时间小于`refresh`，则正常解析请求；如果access-token时间大于`refresh`并且小于`expire`，则生成新的access-token供前端存储；如果access-token时间大于`expire`，则直接报错登录过期；
-+ 刷新的access-token会存在与返回体的头中，例如：`access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.0iOiIyMDIxLTAxLTE1IDE4OjM0OjA2IiwidXNyX2ZybSI6IndlY2hhdCIsInVzcl9pZCI6MX0eyJsZ25fdG.fb5VFl_ivVGqQYngP3xkw6JuUJaxTOITIjTrhG5TJRM`。
++ 刷新的access-token会存在与返回体的头中，例如：`access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.0iOiIyMDIxLTAxLTE1IDE4OjM0OjA2IiwidXNyX2ZybSI6IndlY2hhdCIsInVzcl9pZCI6MX0eyJsZ25fdG.fb5VFl_ivVGqQYngP3xkw6JuUJaxTOITIjTrhG5TJRM`；
++ 基于jwt-token的强制下线，配置为`force-login-out`，数据结构为数组，配置参数为用户ID；
++ 强制下线，如果配置的用户ID为`-1`，意味着全局用户需要强制下线一次，重新登录；
++ 强制下线，如果配置的用户ID不为`-1`，意味着配置用户登录后，被强制下线一次，再重新登录；
++ 强制下线，当且仅当用户在配置之前登录且用户的`access-token`正确有效，会被强制下线一次，不涉及到登录接口无法调用。
 
 ---
 
