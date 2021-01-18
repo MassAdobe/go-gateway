@@ -287,8 +287,8 @@ func ModifiedGrayScale(profile *InitNacosConfiguration) {
 func ModifiedForceLoginOut(profile *InitNacosConfiguration) {
 	ForceLoginOut = make(map[int64]time.Time)
 	// 获取强制下线信息
-	if len(InitConfiguration.AccessToken.ForceLoginOut) != 0 {
-		for _, v := range InitConfiguration.AccessToken.ForceLoginOut {
+	if len(profile.AccessToken.ForceLoginOut) != 0 {
+		for _, v := range profile.AccessToken.ForceLoginOut {
 			if v == -1 { // 如果存在全局配置
 				ForceLoginOut = make(map[int64]time.Time)
 				ForceLoginOut[-1] = time.Now()

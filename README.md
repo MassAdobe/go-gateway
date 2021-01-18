@@ -184,7 +184,7 @@ access-token:
 + 刷新的access-token会存在与返回体的头中，例如：`access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.0iOiIyMDIxLTAxLTE1IDE4OjM0OjA2IiwidXNyX2ZybSI6IndlY2hhdCIsInVzcl9pZCI6MX0eyJsZ25fdG.fb5VFl_ivVGqQYngP3xkw6JuUJaxTOITIjTrhG5TJRM`；
 + 基于jwt-token的强制下线，配置为`force-login-out`，数据结构为数组，配置参数为用户ID；
 + 强制下线，如果配置的用户ID为`-1`，意味着全局用户需要强制下线一次，重新登录；
-+ 强制下线，如果配置的用户ID不为`-1`，意味着配置用户登录后，被强制下线一次，再重新登录；
++ 强制下线，如果配置的用户ID不为`-1`，意味着被配置的用户登录后，被强制下线一次，再重新登录；
 + 强制下线，当且仅当用户在配置之前登录且用户的`access-token`正确有效，会被强制下线一次，不涉及到登录接口无法调用。
 
 ---

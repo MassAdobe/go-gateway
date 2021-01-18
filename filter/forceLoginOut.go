@@ -18,7 +18,7 @@ import (
 /**
  * @Author: MassAdobe
  * @TIME: 2021/1/18 11:30 上午
- * @Description: 执行强制下线
+ * @Description: 执行强制下线 TODO
 **/
 func ForceLoginOut(user *pojo.RequestUser, lgTm string) {
 	logs.Lg.Debug("执行强制下线", logs.Desc("进入执行强制下线"))
@@ -42,7 +42,7 @@ func ForceLoginOut(user *pojo.RequestUser, lgTm string) {
 					panic(errs.NewError(errs.ErrUserLoginTmCode))
 				} else {                // 检验时间
 					if st.Before(tmm) { // 如果当前登录时间在设置超时时间之前
-						logs.Lg.Debug("执行强制下线", logs.Desc(fmt.Sprintf("当前用户: %d的登录时间: %s在强制下线时间: %v之前, 需要被强制下线", user.UserId, lgTm, tm)))
+						logs.Lg.Debug("执行强制下线", logs.Desc(fmt.Sprintf("当前用户: %d的登录时间: %s在强制下线时间: %v之前, 需要被强制下线", user.UserId, lgTm, tmm)))
 						delete(nacos.ForceLoginOut, user.UserId) // 删除当前用户的下线
 						panic(errs.NewError(errs.ErrUserForceLoginOutCode))
 					}
