@@ -94,15 +94,6 @@ func VerifiedJWT(req *http.Request) (*pojo.RequestUser, string) {
 
 /**
  * @Author: MassAdobe
- * @TIME: 2021/1/15 6:18 下午
- * @Description: TODO 踢出用户
-**/
-func signOutUser() {
-
-}
-
-/**
- * @Author: MassAdobe
  * @TIME: 2021/1/15 1:54 下午
  * @Description: 生成Access-Token
 **/
