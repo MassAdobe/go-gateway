@@ -8,6 +8,7 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"math"
 	"net"
 	"os/exec"
 	"regexp"
@@ -109,4 +110,29 @@ func CheckIp(ip string) bool {
 		return true
 	}
 	return false
+}
+
+/**
+ * @Author: MassAdobe
+ * @TIME: 2020-04-26 21:13
+ * @Description: 返回时间字符串
+**/
+func RtnTmString() (timsStr string) {
+	timsStr = time.Now().Format(TimeFormatMS)
+	return
+}
+
+/**
+ * @Author: MassAdobe
+ * @TIME: 2021/1/15 5:34 下午
+ * @Description: 获取与当前相差时间(天)
+**/
+func GetHourDiffer(startTm string) (day int64) {
+	day = math.MaxInt64
+	t1, _ := time.ParseInLocation(TimeFormatMS, startTm, time.Local)
+	t2 := time.Now()
+	if t1.Before(t2) {
+		day = (t2.Unix() - t1.Unix()) / (60 * 60 * 24)
+	}
+	return
 }

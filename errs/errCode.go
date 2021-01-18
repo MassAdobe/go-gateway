@@ -19,6 +19,9 @@ const (
 	ErrNacosGetInstanceCode              // 获取注册中心服务失败
 	ErrBlackListCode                     // 命中黑名单，非法请求
 	ErrRealIpCode                        // 当前客户端请求IP错误，非法请求
+	ErrTokenCode                         // 当前请求携带TOKEN错误
+	ErrTokenLoginTmCode                  // 登录过期
+	ErrJsonCode                          // json解析错误
 
 	/*error desc*/
 	ErrSystemDesc           = "内部错误"
@@ -28,6 +31,9 @@ const (
 	ErrNacosGetInstanceDesc = "获取注册中心服务失败"
 	ErrBlackListDesc        = "命中黑名单，非法请求"
 	ErrRealIpDesc           = "当前客户端请求IP错误，非法请求"
+	ErrTokenDesc            = "当前请求携带TOKEN错误"
+	ErrTokenLoginTmDesc     = "登录过期"
+	ErrJsonDesc             = "Json转换错误"
 )
 
 /**
@@ -44,4 +50,7 @@ var CodeDescMap = map[int]string{
 	ErrNacosGetInstanceCode: ErrNacosGetInstanceDesc,
 	ErrBlackListCode:        ErrBlackListDesc,
 	ErrRealIpCode:           ErrRealIpDesc,
+	ErrTokenCode:            ErrTokenDesc,
+	ErrTokenLoginTmCode:     ErrTokenLoginTmDesc,
+	ErrJsonCode:             ErrJsonDesc,
 }

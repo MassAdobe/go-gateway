@@ -6,6 +6,7 @@
 package functions
 
 import (
+	"github.com/MassAdobe/go-gateway/constants"
 	"net/http"
 )
 
@@ -16,6 +17,7 @@ import (
 **/
 func rtnResponse() func(rsp *http.Response) error {
 	return func(rsp *http.Response) error {
+		rsp.Header.Set(constants.CONTENT_TYPE_KEY, constants.CONTENT_TYPE_INNER)
 		//if rsp.StatusCode != 200 {
 		//	//获取内容
 		//	oldPayload, err := ioutil.ReadAll(rsp.Body)

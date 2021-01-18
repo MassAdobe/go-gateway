@@ -30,9 +30,10 @@ const (
 **/
 func rtnDirector() func(req *http.Request) {
 	return func(req *http.Request) {
- 		logs.Lg.Debug("请求协调者", logs.Desc(fmt.Sprintf("请求来自于: %s, 请求资源: %s", req.RemoteAddr, req.RequestURI)))
+		logs.Lg.Debug("请求协调者", logs.Desc(fmt.Sprintf("请求来自于: %s, 请求资源: %s", req.RemoteAddr, req.RequestURI)))
 		realIp := req.Header.Get(constants.REQUEST_REAL_IP) // 获取真实IP
 		filter.BlackWhiteList(realIp)                       // 黑白名单
+		filter.VerifiedJWT(req)                             // 校验jwt的token
 		index := strings.Index(req.RequestURI[1:], "/")
 		serviceName := req.RequestURI[1 : index+1]
 		{
@@ -114,7 +115,7 @@ func grayScaleNacosDirector(req *http.Request, serviceName string) {
 **/
 func grayScaleSelfDirector(req *http.Request, serviceName string) {
 	var urls interface{}
- 	var okay bool
+	var okay bool
 	if urls, okay = nacos.GrayScaleInstances.Load(serviceName); !okay || nil == urls { // 如果不存在
 		go nacos.NacosGetGrayScaleInstances(serviceName) // 请求中获取实例
 	}

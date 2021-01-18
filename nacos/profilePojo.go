@@ -50,6 +50,12 @@ type InitNacosConfiguration struct {
 			Mark string `yaml:"mark"` // 值
 		} `yaml:"scope"` // 范围
 	} `yaml:"grayscale"` // 灰度发布
+
+	AccessToken struct {
+		Verify  string `yaml:"verify"`  // 校验字段
+		Refresh int64  `yaml:"refresh"` // 更新token的时间(天)
+		Expire  int64  `yaml:"expire"`  // 过期时间(天)
+	} `yaml:"access-token"` // 用户携带token
 }
 
 /**
