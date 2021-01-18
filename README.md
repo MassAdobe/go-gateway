@@ -161,6 +161,24 @@ grayscale:
 + 当AB测试完毕，和灰度发布完毕，需要把全局的服务统一成同一个版本后，把网关的值调整为正确的配置，关闭灰度发布：`grayscale.open = false`，修改`routers.version`为最新的版本号；
 + 基于`userScope`和`userId`的，因为没有确定登录方式，暂未实现。
 
+## 更新access-token
+```yaml
+# 用户携带token
+access-token:
+  # 校验字段
+  verify: '8ja81zhjRSsr8Vkr'
+  # 更新token的时间(天)
+  refresh: 20
+  # 过期token的时间(天)
+  expire: 30
+```
++ 请求中如果有access-token，会根据加解密获取token信息，带入至go-gin的框架中；
++ 会根据nacos中配置`verify`校验access-token的正确性；
++ 会根据`refresh`时间更新access-token；
++ 会根据`expire`过期access-token；
++ 如果access-token时间小于`refresh`，则正常解析请求；如果access-token时间大于`refresh`并且小于`expire`，则生成新的access-token供前端存储；如果access-token时间大于`expire`，则直接报错登录过期；
++ 刷新的access-token会存在与返回体的头中，例如：`access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.0iOiIyMDIxLTAxLTE1IDE4OjM0OjA2IiwidXNyX2ZybSI6IndlY2hhdCIsInVzcl9pZCI6MX0eyJsZ25fdG.fb5VFl_ivVGqQYngP3xkw6JuUJaxTOITIjTrhG5TJRM`。
+
 ---
 
 ## 网关启动流程
