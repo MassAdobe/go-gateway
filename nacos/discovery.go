@@ -23,8 +23,15 @@ import (
 )
 
 const (
-	INSTANCE_LIST_EMPTY = "instance list is empty!" // 列表为空错误
-	DEFAULT_SCHEMA      = "http"                    // 固定请求方式
+	INSTANCE_LIST_EMPTY          = "instance list is empty!" // 列表为空错误
+	DEFAULT_SCHEMA               = "http"                    // 固定请求方式
+	NACOS_SERVER_CONFIGS_MARK    = "serverConfigs"
+	NACOS_CLIENT_CONFIG_MARK     = "clientConfig"
+	NACOS_REGIST_IDC_MARK        = "idc"
+	NACOS_REGIST_IDC_INNER       = "shanghai"
+	NACOS_REGIST_TIMESTAMP_MARK  = "timestamp"
+	NACOS_DISCOVERY_CLUSTER_NAME = "DEFAULT"
+	NACOS_CONFIGURATION_MARK     = "nacos"
 )
 
 var (
@@ -45,8 +52,8 @@ func NacosDiscovery() {
 		var namingClientErr error
 		// 创建服务发现客户端
 		namingClient, namingClientErr = clients.CreateNamingClient(map[string]interface{}{
-			"serverConfigs": serverCs,
-			"clientConfig":  clientC,
+			NACOS_SERVER_CONFIGS_MARK: serverCs,
+			NACOS_CLIENT_CONFIG_MARK:  clientC,
 		})
 		if nil != namingClientErr {
 			logs.Lg.Error("nacos服务注册与发现", namingClientErr, logs.Desc("创建服务发现客户端失败"))
@@ -66,9 +73,9 @@ func NacosDiscovery() {
 				Enable:      true,
 				Healthy:     true,
 				Ephemeral:   true,
-				Metadata:    map[string]string{"idc": "shanghai", "timestamp": utils.RtnCurTime()},
-				ClusterName: "DEFAULT",                // 默认值DEFAULT
-				GroupName:   pojo.InitConf.NacosGroup, // 默认值DEFAULT_GROUP
+				Metadata:    map[string]string{NACOS_REGIST_IDC_MARK: NACOS_REGIST_IDC_INNER, NACOS_REGIST_TIMESTAMP_MARK: utils.RtnCurTime()},
+				ClusterName: NACOS_DISCOVERY_CLUSTER_NAME, // 默认值DEFAULT
+				GroupName:   pojo.InitConf.NacosGroup,     // 默认值DEFAULT_GROUP
 			})
 			if !success || nil != namingErr {
 				logs.Lg.Error("nacos服务注册与发现", namingErr, logs.Desc("nacos注册服务失败"))
@@ -91,8 +98,8 @@ func NacosDeregister() {
 			Port:        InitConfiguration.Serve.Port,
 			ServiceName: InitConfiguration.Serve.ServerName,
 			Ephemeral:   true,
-			Cluster:     "DEFAULT",                // 默认值DEFAULT
-			GroupName:   pojo.InitConf.NacosGroup, // 默认值DEFAULT_GROUP
+			Cluster:     NACOS_DISCOVERY_CLUSTER_NAME, // 默认值DEFAULT
+			GroupName:   pojo.InitConf.NacosGroup,     // 默认值DEFAULT_GROUP
 		})
 		if !success || nil != err {
 			logs.Lg.Error("nacos服务注册与发现", err, logs.Desc("nacos注销服务失败"))
@@ -149,7 +156,7 @@ func InitNacosGetInstances() {
 	}
 
 	// 如果当前的灰度发布是开的状态 并且是自研方式 统计服务
-	if InitConfiguration.GrayScale.Open && strings.ToLower(InitConfiguration.Routers.LoadBalance) != "nacos" {
+	if InitConfiguration.GrayScale.Open && strings.ToLower(InitConfiguration.Routers.LoadBalance) != NACOS_CONFIGURATION_MARK {
 		for k, v := range InitConfiguration.Routers.Services {
 			instances, err := namingClient.SelectAllInstances(vo.SelectAllInstancesParam{
 				ServiceName: k,
@@ -228,7 +235,7 @@ func NacosGetInstances(serviceName string) {
 func NacosGetGrayScaleInstances(serviceName string) {
 	// 如果当前的灰度发布是开的状态 并且是自研方式 统计服务
 	logs.Lg.Debug("获取实例", logs.Desc(fmt.Sprintf("获取的服务实例(请求中，灰度): %s", serviceName)))
-	if PuGrayScale.Open && strings.ToLower(loadbalance.Lb.Type) != "nacos" {
+	if PuGrayScale.Open && strings.ToLower(loadbalance.Lb.Type) != NACOS_CONFIGURATION_MARK {
 		if _, okay := Instances.Load(serviceName); !okay { // 如果当前服务不存在 nacos中没有配置
 			logs.Lg.Error("获取实例", errors.New("current service has not been configured in nacos"), logs.Desc(fmt.Sprintf("当前服务: %s没有在nacos的路由中配置(灰度)", serviceName)))
 			return

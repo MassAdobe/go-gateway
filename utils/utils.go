@@ -22,8 +22,10 @@ import (
  * @Description: 常量池
 **/
 const (
-	TimeFormatMS    = "2006-01-02 15:04:05"
-	TimeFormatMonth = "2006-01-02"
+	TIME_FORMAT_MS    = "2006-01-02 15:04:05"
+	TIME_FORMAT_MONTH = "2006-01-02"
+	SPACE_MARK        = " "
+	IP_REGEX          = `^(([1-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.)(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){2}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`
 )
 
 /**
@@ -45,7 +47,7 @@ func RunInLinuxWithErr(cmd string) (string, error) {
  * @Description: 返回当前时间戳
 **/
 func RtnCurTime() string {
-	return time.Now().Format(TimeFormatMS)
+	return time.Now().Format(TIME_FORMAT_MS)
 }
 
 /**
@@ -77,7 +79,7 @@ func ExternalIP() (net.IP, error) {
 			return ip, nil
 		}
 	}
-	return nil, errors.New("没链接网络")
+	return nil, errors.New("did not connect to network")
 }
 
 func getIpFromAddr(addr net.Addr) net.IP {
@@ -104,9 +106,8 @@ func getIpFromAddr(addr net.Addr) net.IP {
  * @Description: 校验IP地址是否正确
 **/
 func CheckIp(ip string) bool {
-	addr := strings.Trim(ip, " ")
-	regStr := `^(([1-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.)(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){2}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`
-	if match, _ := regexp.MatchString(regStr, addr); match {
+	addr := strings.Trim(ip, SPACE_MARK)
+	if match, _ := regexp.MatchString(IP_REGEX, addr); match {
 		return true
 	}
 	return false
@@ -118,7 +119,7 @@ func CheckIp(ip string) bool {
  * @Description: 返回时间字符串
 **/
 func RtnTmString() (timsStr string) {
-	timsStr = time.Now().Format(TimeFormatMS)
+	timsStr = time.Now().Format(TIME_FORMAT_MS)
 	return
 }
 
@@ -129,7 +130,7 @@ func RtnTmString() (timsStr string) {
 **/
 func GetHourDiffer(startTm string) (day int64) {
 	day = math.MaxInt64
-	t1, _ := time.ParseInLocation(TimeFormatMS, startTm, time.Local)
+	t1, _ := time.ParseInLocation(TIME_FORMAT_MS, startTm, time.Local)
 	t2 := time.Now()
 	if t1.Before(t2) {
 		day = (t2.Unix() - t1.Unix()) / (60 * 60 * 24)

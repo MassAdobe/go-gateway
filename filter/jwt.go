@@ -20,6 +20,10 @@ import (
 	"strings"
 )
 
+const (
+	FULL_STOP_MARK = "."
+)
+
 /**
  * @Author: MassAdobe
  * @TIME: 2021/1/15 1:59 下午
@@ -118,11 +122,11 @@ func createToken(userId int64, userFrom string) string {
  * @Description: 加密token
 **/
 func encodeToken(token string) string {
-	split, rtn := strings.Split(token, "."), ""
+	split, rtn := strings.Split(token, FULL_STOP_MARK), ""
 	for idx, str := range split {
 		if 0 != idx {
 			split[idx] = str[10:] + str[:10]
-			rtn += "." + split[idx]
+			rtn += FULL_STOP_MARK + split[idx]
 		} else {
 			rtn += split[idx]
 		}
@@ -136,11 +140,11 @@ func encodeToken(token string) string {
  * @Description: 解密token
 **/
 func decodeToken(token string) string {
-	split, rtn := strings.Split(token, "."), ""
+	split, rtn := strings.Split(token, FULL_STOP_MARK), ""
 	for idx, str := range split {
 		if 0 != idx {
 			split[idx] = str[len(str)-10:] + str[:len(str)-10]
-			rtn += "." + split[idx]
+			rtn += FULL_STOP_MARK + split[idx]
 		} else {
 			rtn += split[idx]
 		}

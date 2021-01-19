@@ -22,6 +22,24 @@ import (
 	"time"
 )
 
+const (
+	COMMA_MARK                    = ","
+	NACOS_CONTEXT_PATH            = "/nacos"
+	NACOS_LOG_DIR                 = "/tmp/nacos/log"
+	NACOS_LOG_CACHE_DIR           = "/tmp/nacos/cache"
+	NACOS_ROTATE_TIME             = "1h"
+	NACOS_LOG_LEVEL               = "debug"
+	NACOS_SCHEMA                  = "http"
+	NACOS_NOT_LOAD_CACHE_AT_START = true
+	LOG_LEVEL_MODIFIED_DEBUG      = "debug"
+	LOG_LEVEL_MODIFIED_INFO       = "info"
+	LOG_LEVEL_MODIFIED_WARN       = "warn"
+	LOG_LEVEL_MODIFIED_ERROR      = "error"
+	LOG_LEVEL_MODIFIED_DPANIC     = "dpanic"
+	LOG_LEVEL_MODIFIED_PANIC      = "panic"
+	LOG_LEVEL_MODIFIED_FATAL      = "fatal"
+)
+
 var (
 	serverCs      []constant.ServerConfig     // nacos的server配置
 	clientC       constant.ClientConfig       // nacos的client配置
@@ -45,7 +63,7 @@ var (
 func InitNacos() {
 	if pojo.InitConf.NacosConfiguration || pojo.InitConf.NacosDiscovery {
 		// 初始化nacos的server服务
-		nacosIps := strings.Split(pojo.InitConf.NacosServerIps, ",")
+		nacosIps := strings.Split(pojo.InitConf.NacosServerIps, COMMA_MARK)
 		if 0 == len(nacosIps) {
 			fmt.Println(fmt.Sprintf(`{"log_level":"ERROR","time":"%s","msg":"%s","server_name":"%s","desc":"%s"}`, utils.RtnCurTime(), "配置中心", "未知", "nacos地址不能为空"))
 			os.Exit(1)
@@ -57,9 +75,9 @@ func InitNacos() {
 		for _, ip := range nacosIps {
 			serverCs = append(serverCs, constant.ServerConfig{
 				IpAddr:      ip,
-				ContextPath: "/nacos",
+				ContextPath: NACOS_CONTEXT_PATH,
 				Port:        pojo.InitConf.NacosServerPort,
-				Scheme:      "http",
+				Scheme:      NACOS_SCHEMA,
 			})
 		}
 		// 初始化nacos的client服务
@@ -69,12 +87,12 @@ func InitNacos() {
 		}
 		clientC = constant.ClientConfig{
 			NamespaceId:         pojo.InitConf.NacosClientNamespaceId, // 如果需要支持多namespace，我们可以场景多个client,它们有不同的NamespaceId
-			NotLoadCacheAtStart: true,
-			LogDir:              "/tmp/nacos/log",
-			CacheDir:            "/tmp/nacos/cache",
-			RotateTime:          "1h",
+			NotLoadCacheAtStart: NACOS_NOT_LOAD_CACHE_AT_START,
+			LogDir:              NACOS_LOG_DIR,
+			CacheDir:            NACOS_LOG_CACHE_DIR,
+			RotateTime:          NACOS_ROTATE_TIME,
 			MaxAge:              3,
-			LogLevel:            "debug",
+			LogLevel:            NACOS_LOG_LEVEL,
 		}
 		if 0 == pojo.InitConf.NacosClientTimeoutMs {
 			fmt.Println(fmt.Sprintf(`{"log_level":"ERROR","time":"%s","msg":"%s","server_name":"%s","desc":"%s"}`, utils.RtnCurTime(), "配置中心", "未知", "nacos请求Nacos服务端的超时时间为空，默认为10000ms"))
@@ -136,31 +154,31 @@ func ListenConfiguration() {
 				if strings.ToLower(pojo.InitConf.LogLevel) != strings.ToLower(profile.Log.Level) {
 					logs.Lg.Debug("nacos配置文件监听", logs.Desc("日志级别修改"))
 					switch strings.ToLower(profile.Log.Level) {
-					case "debug":
+					case LOG_LEVEL_MODIFIED_DEBUG:
 						logs.Lg.Level.SetLevel(zap.DebugLevel)
 						printModifiedLog(profile.Log.Level)
 						break
-					case "info":
+					case LOG_LEVEL_MODIFIED_INFO:
 						logs.Lg.Level.SetLevel(zap.InfoLevel)
 						printModifiedLog(profile.Log.Level)
 						break
-					case "warn":
+					case LOG_LEVEL_MODIFIED_WARN:
 						logs.Lg.Level.SetLevel(zap.WarnLevel)
 						printModifiedLog(profile.Log.Level)
 						break
-					case "error":
+					case LOG_LEVEL_MODIFIED_ERROR:
 						logs.Lg.Level.SetLevel(zap.ErrorLevel)
 						printModifiedLog(profile.Log.Level)
 						break
-					case "dpanic":
+					case LOG_LEVEL_MODIFIED_DPANIC:
 						logs.Lg.Level.SetLevel(zap.DPanicLevel)
 						printModifiedLog(profile.Log.Level)
 						break
-					case "panic":
+					case LOG_LEVEL_MODIFIED_PANIC:
 						logs.Lg.Level.SetLevel(zap.PanicLevel)
 						printModifiedLog(profile.Log.Level)
 						break
-					case "fatal":
+					case LOG_LEVEL_MODIFIED_FATAL:
 						logs.Lg.Level.SetLevel(zap.FatalLevel)
 						printModifiedLog(profile.Log.Level)
 						break

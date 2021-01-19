@@ -18,14 +18,14 @@ import (
 /**
  * @Author: MassAdobe
  * @TIME: 2021/1/18 11:30 上午
- * @Description: 执行强制下线 TODO
+ * @Description: 执行强制下线
 **/
 func ForceLoginOut(user *pojo.RequestUser, lgTm string) {
 	logs.Lg.Debug("执行强制下线", logs.Desc("进入执行强制下线"))
 	if user != nil && len(lgTm) != 0 && len(nacos.ForceLoginOut) != 0 { // 命中全局下线
 		if tm, okay := nacos.ForceLoginOut[-1]; okay { // 如果存在全局
 			logs.Lg.Debug("执行强制下线", logs.Desc(fmt.Sprintf("命中全局下线, 用户: %d, 登录时间: %s", user.UserId, lgTm)))
-			if st, err := time.Parse(utils.TimeFormatMS, lgTm); err != nil { // string 转 time
+			if st, err := time.Parse(utils.TIME_FORMAT_MS, lgTm); err != nil { // string 转 time
 				logs.Lg.Error("执行强制下线", err, logs.Desc(fmt.Sprintf("用户的登录时间解析错误: 用户ID: %d, 用户登录时间: %s", user.UserId, lgTm)))
 				panic(errs.NewError(errs.ErrUserLoginTmCode))
 			} else {               // 检验时间
@@ -37,7 +37,7 @@ func ForceLoginOut(user *pojo.RequestUser, lgTm string) {
 		} else {
 			if tmm, okay := nacos.ForceLoginOut[user.UserId]; okay {
 				logs.Lg.Debug("执行强制下线", logs.Desc(fmt.Sprintf("命中局部下线, 用户: %d, 登录时间: %s", user.UserId, lgTm)))
-				if st, err := time.Parse(utils.TimeFormatMS, lgTm); err != nil { // string 转 time
+				if st, err := time.Parse(utils.TIME_FORMAT_MS, lgTm); err != nil { // string 转 time
 					logs.Lg.Error("执行强制下线", err, logs.Desc(fmt.Sprintf("用户的登录时间解析错误: 用户ID: %d, 用户登录时间: %s", user.UserId, lgTm)))
 					panic(errs.NewError(errs.ErrUserLoginTmCode))
 				} else {                // 检验时间

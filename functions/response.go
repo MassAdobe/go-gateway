@@ -17,6 +17,7 @@ import (
 **/
 func rtnResponse() func(rsp *http.Response) error {
 	return func(rsp *http.Response) error {
+		// 塞入头信息，标志以JSON协议传输
 		rsp.Header.Set(constants.CONTENT_TYPE_KEY, constants.CONTENT_TYPE_INNER)
 		//if rsp.StatusCode != 200 {
 		//	//获取内容

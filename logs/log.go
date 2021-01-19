@@ -36,14 +36,20 @@ type MyLog struct {
  * @Description: 日志常量
 **/
 const (
-	TIME        = "time"
-	LOG_LEVEL   = "log_level"
-	LOGGER      = "logger"
-	DESC        = "desc"
-	MSG         = "msg"
-	TRACE       = "trace"
-	ERROR       = "error"
-	TIME_FORMAT = "2006-01-02 15:04:05.000"
+	TIME             = "time"
+	LOG_LEVEL        = "log_level"
+	LOGGER           = "logger"
+	DESC             = "desc"
+	MSG              = "msg"
+	TRACE            = "trace"
+	ERROR            = "error"
+	TIME_FORMAT      = "2006-01-02 15:04:05.000"
+	SERVER_NAME_MARK = "server_name"
+	LOG_LEVEL_DEBUG  = "debug"
+	LOG_LEVEL_INFO   = "info"
+	LOG_LEVEL_ERROR  = "error"
+	FUNCTION_MARK    = "function"
+	PATH_NUM_MARK    = "path_num"
 )
 
 /**
@@ -53,7 +59,7 @@ const (
 **/
 func NewLogger(filePath, level string, maxSize, maxBackups, maxAge int, compress bool, serviceName string) {
 	core := newCore(filePath, level, maxSize, maxBackups, maxAge, compress)
-	Lg.ZapLog = zap.New(core, zap.AddCaller(), zap.Development(), zap.Fields(zap.String("server_name", serviceName)))
+	Lg.ZapLog = zap.New(core, zap.AddCaller(), zap.Development(), zap.Fields(zap.String(SERVER_NAME_MARK, serviceName)))
 	zap.ReplaceGlobals(Lg.ZapLog)
 	Lg.Info("日志启动成功")
 }
@@ -75,13 +81,13 @@ func newCore(filePath, level string, maxSize, maxBackups, maxAge int, compress b
 	// 设置日志级别
 	Lg.Level = zap.NewAtomicLevel()
 	switch level {
-	case "debug":
+	case LOG_LEVEL_DEBUG:
 		Lg.Level.SetLevel(zap.DebugLevel)
 		break
-	case "info":
+	case LOG_LEVEL_INFO:
 		Lg.Level.SetLevel(zap.InfoLevel)
 		break
-	case "error":
+	case LOG_LEVEL_ERROR:
 		Lg.Level.SetLevel(zap.ErrorLevel)
 		break
 	default:
@@ -193,8 +199,8 @@ func (this *MyLog) Debug(msg string, contextAndFields ...interface{}) {
 	fields := this.setTraceAndStep(contextAndFields...)
 	pc, file, line, _ := runtime.Caller(1)
 	f := runtime.FuncForPC(pc)
-	fields = append(fields, zap.Any("function", f.Name()))
-	fields = append(fields, zap.Any("path_num", fmt.Sprintf("%s:%d", file, line)))
+	fields = append(fields, zap.Any(FUNCTION_MARK, f.Name()))
+	fields = append(fields, zap.Any(PATH_NUM_MARK, fmt.Sprintf("%s:%d", file, line)))
 	if ce := this.ZapLog.Check(zapcore.DebugLevel, msg); ce != nil {
 		ce.Write(fields...)
 	}
@@ -209,8 +215,8 @@ func (this *MyLog) Info(msg string, contextAndFields ...interface{}) {
 	fields := this.setTraceAndStep(contextAndFields...)
 	pc, file, line, _ := runtime.Caller(1)
 	f := runtime.FuncForPC(pc)
-	fields = append(fields, zap.Any("function", f.Name()))
-	fields = append(fields, zap.Any("path_num", fmt.Sprintf("%s:%d", file, line)))
+	fields = append(fields, zap.Any(FUNCTION_MARK, f.Name()))
+	fields = append(fields, zap.Any(PATH_NUM_MARK, fmt.Sprintf("%s:%d", file, line)))
 	if ce := this.ZapLog.Check(zapcore.InfoLevel, msg); ce != nil {
 		ce.Write(fields...)
 	}
@@ -226,8 +232,8 @@ func (this *MyLog) Error(msg string, err error, contextAndFields ...interface{})
 	pc, file, line, _ := runtime.Caller(1)
 	f := runtime.FuncForPC(pc)
 	fields = append(fields, Error(err))
-	fields = append(fields, zap.Any("function", f.Name()))
-	fields = append(fields, zap.Any("path_num", fmt.Sprintf("%s:%d", file, line)))
+	fields = append(fields, zap.Any(FUNCTION_MARK, f.Name()))
+	fields = append(fields, zap.Any(PATH_NUM_MARK, fmt.Sprintf("%s:%d", file, line)))
 	if ce := this.ZapLog.Check(zapcore.ErrorLevel, msg); ce != nil {
 		ce.Write(fields...)
 	}

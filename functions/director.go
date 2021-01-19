@@ -25,6 +25,9 @@ const (
 	DEFAULT_SCHEMA              = "http"  // 默认转发方式
 	GRAY_SCALE_USER_SCOPE_GREAT = "great" // 用户范围灰度：大于
 	GRAY_SCALE_USER_SCOPE_LESS  = "less"  // 用户范围灰度：小于
+	BACKSLASH_MARK              = "/"
+	AND_MARK                    = "&"
+	NACOS_MARK                  = "nacos"
 )
 
 /**
@@ -39,7 +42,7 @@ func rtnDirector() func(req *http.Request) {
 		filter.BlackWhiteList(realIp)                       // 黑白名单
 		user, lgTm := filter.VerifiedJWT(req)               // 校验jwt的token(同时返回用户信息)
 		filter.ForceLoginOut(user, lgTm)                    // 强制下线
-		index := strings.Index(req.RequestURI[1:], "/")
+		index := strings.Index(req.RequestURI[1:], BACKSLASH_MARK)
 		serviceName := req.RequestURI[1 : index+1]
 		// 灰度开启情况
 		if nacos.PuGrayScale.Open { // 如果开启灰度
@@ -68,7 +71,7 @@ func rtnDirector() func(req *http.Request) {
 			default: // 默认不走灰度
 				goto Loop // 不存在于灰度发布的列表中 走正常路由
 			}
-			if loadbalance.Lb.Type == "nacos" { // 基于nacos的WRR负载 灰度
+			if strings.ToLower(loadbalance.Lb.Type) == NACOS_MARK { // 基于nacos的WRR负载 灰度
 				logs.Lg.Debug("请求协调者", logs.Desc("当前请求使用灰度发布下nacos负载"))
 				grayScaleNacosDirector(req, serviceName)
 			} else { // 基于自研的负载 灰度
@@ -80,7 +83,7 @@ func rtnDirector() func(req *http.Request) {
 		// 非灰度开启情况
 	Loop:
 		{
-			if loadbalance.Lb.Type == "nacos" { // 基于nacos的WRR负载
+			if loadbalance.Lb.Type == NACOS_MARK { // 基于nacos的WRR负载
 				logs.Lg.Debug("请求协调者", logs.Desc("当前请求使用nacos负载"))
 				nacosDirector(req, serviceName)
 			} else { // 基于自研的负载
@@ -139,7 +142,7 @@ func grayScaleNacosDirector(req *http.Request, serviceName string) {
 		if targetQuery == "" || req.URL.RawQuery == "" {
 			req.URL.RawQuery = targetQuery + req.URL.RawQuery
 		} else {
-			req.URL.RawQuery = targetQuery + "&" + req.URL.RawQuery
+			req.URL.RawQuery = targetQuery + AND_MARK + req.URL.RawQuery
 		}
 	}
 }
@@ -174,7 +177,7 @@ func grayScaleSelfDirector(req *http.Request, serviceName string) {
 	if targetQuery == "" || req.URL.RawQuery == "" {
 		req.URL.RawQuery = targetQuery + req.URL.RawQuery
 	} else {
-		req.URL.RawQuery = targetQuery + "&" + req.URL.RawQuery
+		req.URL.RawQuery = targetQuery + AND_MARK + req.URL.RawQuery
 	}
 	go filter.CheckGrayScaleTmz(serviceName) // 灰度，检查次数，如果超过了相关次数，重新获取服务信息
 }
@@ -202,7 +205,7 @@ func nacosDirector(req *http.Request, serviceName string) {
 		if targetQuery == "" || req.URL.RawQuery == "" {
 			req.URL.RawQuery = targetQuery + req.URL.RawQuery
 		} else {
-			req.URL.RawQuery = targetQuery + "&" + req.URL.RawQuery
+			req.URL.RawQuery = targetQuery + AND_MARK + req.URL.RawQuery
 		}
 	}
 }
@@ -237,7 +240,7 @@ func selfDirector(req *http.Request, serviceName string) {
 	if targetQuery == "" || req.URL.RawQuery == "" {
 		req.URL.RawQuery = targetQuery + req.URL.RawQuery
 	} else {
-		req.URL.RawQuery = targetQuery + "&" + req.URL.RawQuery
+		req.URL.RawQuery = targetQuery + AND_MARK + req.URL.RawQuery
 	}
 	go filter.CheckTmz(serviceName) // 检查次数，如果超过了相关次数，重新获取服务信息
 }
@@ -248,8 +251,8 @@ func selfDirector(req *http.Request, serviceName string) {
  * @Description: 拼接请求地址
 **/
 func singleJoiningSlash(a, b string) string {
-	aslash := strings.HasSuffix(a, "/")
-	bslash := strings.HasPrefix(b, "/")
+	aslash := strings.HasSuffix(a, BACKSLASH_MARK)
+	bslash := strings.HasPrefix(b, BACKSLASH_MARK)
 	switch {
 	case aslash && bslash:
 		return a + b[1:]
