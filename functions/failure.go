@@ -24,7 +24,7 @@ import (
 **/
 func rtnFailure() func(w http.ResponseWriter, r *http.Request, err error) {
 	return func(write http.ResponseWriter, req *http.Request, err error) {
-		index := strings.Index(req.RequestURI[1:], BACKSLASH_MARK)
+		index := strings.Index(req.RequestURI[1:], constants.BACKSLASH_MARK)
 		serviceName := req.RequestURI[1 : index+1]
 		write.Header().Set(constants.CONTENT_TYPE_KEY, constants.CONTENT_TYPE_INNER)
 		var rtn []byte
@@ -37,7 +37,7 @@ func rtnFailure() func(w http.ResponseWriter, r *http.Request, err error) {
 			for _, v := range load.([]*url.URL) {
 				if v.Host != host {
 					newUrls = append(newUrls, &url.URL{
-						Scheme: nacos.DEFAULT_SCHEMA,
+						Scheme: constants.NACOS_SCHEMA,
 						Host:   v.Host,
 					})
 				}

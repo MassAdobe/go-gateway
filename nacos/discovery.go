@@ -8,6 +8,7 @@ package nacos
 import (
 	"errors"
 	"fmt"
+	"github.com/MassAdobe/go-gateway/constants"
 	"github.com/MassAdobe/go-gateway/errs"
 	"github.com/MassAdobe/go-gateway/loadbalance"
 	"github.com/MassAdobe/go-gateway/logs"
@@ -20,18 +21,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-)
-
-const (
-	INSTANCE_LIST_EMPTY          = "instance list is empty!" // 列表为空错误
-	DEFAULT_SCHEMA               = "http"                    // 固定请求方式
-	NACOS_SERVER_CONFIGS_MARK    = "serverConfigs"
-	NACOS_CLIENT_CONFIG_MARK     = "clientConfig"
-	NACOS_REGIST_IDC_MARK        = "idc"
-	NACOS_REGIST_IDC_INNER       = "shanghai"
-	NACOS_REGIST_TIMESTAMP_MARK  = "timestamp"
-	NACOS_DISCOVERY_CLUSTER_NAME = "DEFAULT"
-	NACOS_CONFIGURATION_MARK     = "nacos"
 )
 
 var (
@@ -52,8 +41,8 @@ func NacosDiscovery() {
 		var namingClientErr error
 		// 创建服务发现客户端
 		namingClient, namingClientErr = clients.CreateNamingClient(map[string]interface{}{
-			NACOS_SERVER_CONFIGS_MARK: serverCs,
-			NACOS_CLIENT_CONFIG_MARK:  clientC,
+			constants.NACOS_SERVER_CONFIGS_MARK: serverCs,
+			constants.NACOS_CLIENT_CONFIG_MARK:  clientC,
 		})
 		if nil != namingClientErr {
 			logs.Lg.Error("nacos服务注册与发现", namingClientErr, logs.Desc("创建服务发现客户端失败"))
@@ -73,9 +62,9 @@ func NacosDiscovery() {
 				Enable:      true,
 				Healthy:     true,
 				Ephemeral:   true,
-				Metadata:    map[string]string{NACOS_REGIST_IDC_MARK: NACOS_REGIST_IDC_INNER, NACOS_REGIST_TIMESTAMP_MARK: utils.RtnCurTime()},
-				ClusterName: NACOS_DISCOVERY_CLUSTER_NAME, // 默认值DEFAULT
-				GroupName:   pojo.InitConf.NacosGroup,     // 默认值DEFAULT_GROUP
+				Metadata:    map[string]string{constants.NACOS_REGIST_IDC_MARK: constants.NACOS_REGIST_IDC_INNER, constants.NACOS_REGIST_TIMESTAMP_MARK: utils.RtnCurTime()},
+				ClusterName: constants.NACOS_DISCOVERY_CLUSTER_NAME, // 默认值DEFAULT
+				GroupName:   pojo.InitConf.NacosGroup,               // 默认值DEFAULT_GROUP
 			})
 			if !success || nil != namingErr {
 				logs.Lg.Error("nacos服务注册与发现", namingErr, logs.Desc("nacos注册服务失败"))
@@ -98,8 +87,8 @@ func NacosDeregister() {
 			Port:        InitConfiguration.Serve.Port,
 			ServiceName: InitConfiguration.Serve.ServerName,
 			Ephemeral:   true,
-			Cluster:     NACOS_DISCOVERY_CLUSTER_NAME, // 默认值DEFAULT
-			GroupName:   pojo.InitConf.NacosGroup,     // 默认值DEFAULT_GROUP
+			Cluster:     constants.NACOS_DISCOVERY_CLUSTER_NAME, // 默认值DEFAULT
+			GroupName:   pojo.InitConf.NacosGroup,               // 默认值DEFAULT_GROUP
 		})
 		if !success || nil != err {
 			logs.Lg.Error("nacos服务注册与发现", err, logs.Desc("nacos注销服务失败"))
@@ -133,7 +122,7 @@ func InitNacosGetInstances() {
 			GroupName:   v, // 默认值DEFAULT_GROUP
 			Clusters:    []string{Version},
 		})
-		if err != nil && err.Error() != INSTANCE_LIST_EMPTY {
+		if err != nil && err.Error() != constants.INSTANCE_LIST_EMPTY {
 			logs.Lg.Error("获取实例", err, logs.Desc("获取实例失败"))
 		}
 		RequestTmzMap.Store(k, 0)        // 添加调用次数
@@ -144,26 +133,26 @@ func InitNacosGetInstances() {
 			urls := make([]*url.URL, 0)
 			for _, val := range instances {
 				urls = append(urls, &url.URL{
-					Scheme: DEFAULT_SCHEMA,
+					Scheme: constants.NACOS_SCHEMA,
 					Host:   fmt.Sprintf("%s:%d", val.Ip, val.Port),
 				})
 			}
 			Instances.Store(k, urls)
 		}
-		if strings.ToLower(loadbalance.Lb.Type) == loadbalance.LOAD_BALANCE_ROUND {
+		if strings.ToLower(loadbalance.Lb.Type) == constants.LOAD_BALANCE_ROUND {
 			loadbalance.Lb.Round.Store(k, 0)
 		}
 	}
 
 	// 如果当前的灰度发布是开的状态 并且是自研方式 统计服务
-	if InitConfiguration.GrayScale.Open && strings.ToLower(InitConfiguration.Routers.LoadBalance) != NACOS_CONFIGURATION_MARK {
+	if InitConfiguration.GrayScale.Open && strings.ToLower(InitConfiguration.Routers.LoadBalance) != constants.NACOS_CONFIGURATION_MARK {
 		for k, v := range InitConfiguration.Routers.Services {
 			instances, err := namingClient.SelectAllInstances(vo.SelectAllInstancesParam{
 				ServiceName: k,
 				GroupName:   v, // 默认值DEFAULT_GROUP
 				Clusters:    []string{InitConfiguration.GrayScale.Version},
 			})
-			if err != nil && err.Error() != INSTANCE_LIST_EMPTY {
+			if err != nil && err.Error() != constants.INSTANCE_LIST_EMPTY {
 				logs.Lg.Error("获取实例", err, logs.Desc("获取实例失败(灰度)"))
 			}
 			GrayScaleRequestTmzMap.Store(k, 0)        // 添加调用次数(灰度)
@@ -174,13 +163,13 @@ func InitNacosGetInstances() {
 				urls := make([]*url.URL, 0)
 				for _, val := range instances {
 					urls = append(urls, &url.URL{
-						Scheme: DEFAULT_SCHEMA,
+						Scheme: constants.NACOS_SCHEMA,
 						Host:   fmt.Sprintf("%s:%d", val.Ip, val.Port),
 					})
 				}
 				GrayScaleInstances.Store(k, urls)
 			}
-			if strings.ToLower(loadbalance.Lb.Type) == loadbalance.LOAD_BALANCE_ROUND {
+			if strings.ToLower(loadbalance.Lb.Type) == constants.LOAD_BALANCE_ROUND {
 				loadbalance.Lb.GrayScaleRound.Store(k, 0)
 			}
 		}
@@ -203,7 +192,7 @@ func NacosGetInstances(serviceName string) {
 		GroupName:   InitConfiguration.Routers.Services[serviceName], // 默认值DEFAULT_GROUP
 		Clusters:    []string{Version},
 	})
-	if err != nil && err.Error() != INSTANCE_LIST_EMPTY {
+	if err != nil && err.Error() != constants.INSTANCE_LIST_EMPTY {
 		logs.Lg.Error("获取实例", err, logs.Desc(fmt.Sprintf("获取实例失败(请求中)，服务: %s", serviceName)))
 		panic(errs.NewError(errs.ErrNacosGetInstanceCode))
 	}
@@ -215,13 +204,13 @@ func NacosGetInstances(serviceName string) {
 		urls := make([]*url.URL, 0)
 		for _, val := range instances {
 			urls = append(urls, &url.URL{
-				Scheme: DEFAULT_SCHEMA,
+				Scheme: constants.NACOS_SCHEMA,
 				Host:   fmt.Sprintf("%s:%d", val.Ip, val.Port),
 			})
 		}
 		Instances.Store(serviceName, urls)
 	}
-	if strings.ToLower(loadbalance.Lb.Type) == loadbalance.LOAD_BALANCE_ROUND {
+	if strings.ToLower(loadbalance.Lb.Type) == constants.LOAD_BALANCE_ROUND {
 		logs.Lg.Debug("获取实例", logs.Desc(fmt.Sprintf("当前配置为自研强轮训，设置轮训参数，服务: %s", serviceName)))
 		loadbalance.Lb.Round.Store(serviceName, 0)
 	}
@@ -235,7 +224,7 @@ func NacosGetInstances(serviceName string) {
 func NacosGetGrayScaleInstances(serviceName string) {
 	// 如果当前的灰度发布是开的状态 并且是自研方式 统计服务
 	logs.Lg.Debug("获取实例", logs.Desc(fmt.Sprintf("获取的服务实例(请求中，灰度): %s", serviceName)))
-	if PuGrayScale.Open && strings.ToLower(loadbalance.Lb.Type) != NACOS_CONFIGURATION_MARK {
+	if PuGrayScale.Open && strings.ToLower(loadbalance.Lb.Type) != constants.NACOS_CONFIGURATION_MARK {
 		if _, okay := Instances.Load(serviceName); !okay { // 如果当前服务不存在 nacos中没有配置
 			logs.Lg.Error("获取实例", errors.New("current service has not been configured in nacos"), logs.Desc(fmt.Sprintf("当前服务: %s没有在nacos的路由中配置(灰度)", serviceName)))
 			return
@@ -245,7 +234,7 @@ func NacosGetGrayScaleInstances(serviceName string) {
 			GroupName:   InitConfiguration.Routers.Services[serviceName], // 默认值DEFAULT_GROUP
 			Clusters:    []string{PuGrayScale.Version},
 		})
-		if err != nil && err.Error() != INSTANCE_LIST_EMPTY {
+		if err != nil && err.Error() != constants.INSTANCE_LIST_EMPTY {
 			logs.Lg.Error("获取实例", err, logs.Desc(fmt.Sprintf("获取实例失败(请求中，灰度)，服务: %s", serviceName)))
 			panic(errs.NewError(errs.ErrNacosGetInstanceCode))
 		}
@@ -257,13 +246,13 @@ func NacosGetGrayScaleInstances(serviceName string) {
 			urls := make([]*url.URL, 0)
 			for _, val := range instances {
 				urls = append(urls, &url.URL{
-					Scheme: DEFAULT_SCHEMA,
+					Scheme: constants.NACOS_SCHEMA,
 					Host:   fmt.Sprintf("%s:%d", val.Ip, val.Port),
 				})
 			}
 			GrayScaleInstances.Store(serviceName, urls)
 		}
-		if strings.ToLower(loadbalance.Lb.Type) == loadbalance.LOAD_BALANCE_ROUND {
+		if strings.ToLower(loadbalance.Lb.Type) == constants.LOAD_BALANCE_ROUND {
 			logs.Lg.Debug("获取实例", logs.Desc(fmt.Sprintf("当前配置为自研强轮训，设置轮训参数，灰度，服务: %s", serviceName)))
 			loadbalance.Lb.GrayScaleRound.Store(serviceName, 0)
 		}
@@ -292,7 +281,7 @@ func NacosGetInstancesListener(profile *InitNacosConfiguration) {
 		if _, okay := profile.Routers.Services[key.(string)]; !okay {
 			Instances.Delete(key)     // 删除服务记录数据
 			RequestTmzMap.Delete(key) // 删除调用次数
-			if strings.ToLower(loadbalance.Lb.Type) == loadbalance.LOAD_BALANCE_ROUND {
+			if strings.ToLower(loadbalance.Lb.Type) == constants.LOAD_BALANCE_ROUND {
 				loadbalance.Lb.Round.Delete(key) // 删除轮训数据
 				logs.Lg.Debug("nacos配置文件监听", logs.Desc(fmt.Sprintf("删除路由: %s的配置", key)))
 			}
@@ -306,7 +295,7 @@ func NacosGetInstancesListener(profile *InitNacosConfiguration) {
 			GroupName:   v, // 默认值DEFAULT_GROUP
 			Clusters:    []string{Version},
 		})
-		if err != nil && err.Error() != INSTANCE_LIST_EMPTY {
+		if err != nil && err.Error() != constants.INSTANCE_LIST_EMPTY {
 			logs.Lg.Error("nacos配置文件监听", err, logs.Desc(fmt.Sprintf("获取路由实例失败(nacos监听)，服务: %s", k)))
 			return
 		}
@@ -320,7 +309,7 @@ func NacosGetInstancesListener(profile *InitNacosConfiguration) {
 			urls := make([]*url.URL, 0)
 			for _, val := range instances {
 				urls = append(urls, &url.URL{
-					Scheme: DEFAULT_SCHEMA,
+					Scheme: constants.NACOS_SCHEMA,
 					Host:   fmt.Sprintf("%s:%d", val.Ip, val.Port),
 				})
 			}
@@ -343,7 +332,7 @@ func NacosGetGrayScaleInstancesListener(profile *InitNacosConfiguration) {
 			if _, okay := profile.Routers.Services[key.(string)]; !okay {
 				GrayScaleInstances.Delete(key)     // 删除服务记录数据
 				GrayScaleRequestTmzMap.Delete(key) // 删除调用次数
-				if strings.ToLower(loadbalance.Lb.Type) == loadbalance.LOAD_BALANCE_ROUND {
+				if strings.ToLower(loadbalance.Lb.Type) == constants.LOAD_BALANCE_ROUND {
 					loadbalance.Lb.GrayScaleRound.Delete(key) // 删除轮训数据
 					logs.Lg.Debug("nacos配置文件监听", logs.Desc(fmt.Sprintf("删除灰度路由: %s的配置", key)))
 				}
@@ -357,7 +346,7 @@ func NacosGetGrayScaleInstancesListener(profile *InitNacosConfiguration) {
 				GroupName:   v, // 默认值DEFAULT_GROUP
 				Clusters:    []string{PuGrayScale.Version},
 			})
-			if err != nil && err.Error() != INSTANCE_LIST_EMPTY {
+			if err != nil && err.Error() != constants.INSTANCE_LIST_EMPTY {
 				logs.Lg.Error("nacos配置文件监听", err, logs.Desc(fmt.Sprintf("获取路由实例失败(nacos监听)，灰度，服务: %s", k)))
 				return
 			}
@@ -371,7 +360,7 @@ func NacosGetGrayScaleInstancesListener(profile *InitNacosConfiguration) {
 				urls := make([]*url.URL, 0)
 				for _, val := range instances {
 					urls = append(urls, &url.URL{
-						Scheme: DEFAULT_SCHEMA,
+						Scheme: constants.NACOS_SCHEMA,
 						Host:   fmt.Sprintf("%s:%d", val.Ip, val.Port),
 					})
 				}

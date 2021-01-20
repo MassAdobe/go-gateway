@@ -8,6 +8,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/MassAdobe/go-gateway/constants"
 	"github.com/MassAdobe/go-gateway/functions"
 	"github.com/MassAdobe/go-gateway/logs"
 	"github.com/MassAdobe/go-gateway/nacos"
@@ -23,12 +24,6 @@ import (
 	"time"
 )
 
-const (
-	SYSTEM_CONTROL_PWD = "pwd"
-	CONFIG_NAME        = "/config.yml"
-	COLON_MARK         = ":"
-)
-
 /**
  * @Author: MassAdobe
  * @TIME: 2021/1/11 8:04 下午
@@ -36,8 +31,8 @@ const (
 **/
 func init() {
 	fmt.Println(fmt.Sprintf(`{"log_level":"INFO","time":"%s","msg":"%s","server_name":"%s","desc":"%s"}`, utils.RtnCurTime(), "启动", "未知", "启动中"))
-	s, _ := utils.RunInLinuxWithErr(SYSTEM_CONTROL_PWD) // 执行linux命令获取当前路径
-	sysData, _ := ioutil.ReadFile(s + CONFIG_NAME)      // 读取系统配置
+	s, _ := utils.RunInLinuxWithErr(constants.SYSTEM_CONTROL_PWD) // 执行linux命令获取当前路径
+	sysData, _ := ioutil.ReadFile(s + constants.CONFIG_NAME)      // 读取系统配置
 	if err := yaml.Unmarshal(sysData, &pojo.InitConf); err != nil {
 		fmt.Println(fmt.Sprintf(`{"log_level":"INFO","time":"%s","msg":"%s","server_name":"%s","desc":"%s"}`, utils.RtnCurTime(), "启动", "未知", "解析系统配置失败"))
 		os.Exit(1)
@@ -61,7 +56,7 @@ func init() {
 **/
 func main() {
 	server := &http.Server{ // 创建服务
-		Addr:           COLON_MARK + strconv.Itoa(int(nacos.InitConfiguration.Serve.Port)),
+		Addr:           constants.COLON_MARK + strconv.Itoa(int(nacos.InitConfiguration.Serve.Port)),
 		ReadTimeout:    60 * time.Second,
 		WriteTimeout:   60 * time.Second,
 		MaxHeaderBytes: 1 << 20,

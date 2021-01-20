@@ -8,15 +8,11 @@ package loadbalance
 import (
 	"errors"
 	"fmt"
+	"github.com/MassAdobe/go-gateway/constants"
 	"github.com/MassAdobe/go-gateway/logs"
 	"math/rand"
 	"net/url"
 	"sync"
-)
-
-const (
-	LOAD_BALANCE_ROUND  = "round"  // 轮询
-	LOAD_BALANCE_RANDOM = "random" // 随机
 )
 
 var (
@@ -78,9 +74,9 @@ func (this *LoadBalance) RoundLB(serviceName string, urls interface{}) *url.URL 
  * @Description: 根据当前选择，返回url
 **/
 func (this *LoadBalance) CurUrl(serviceName string, urls interface{}) *url.URL {
-	if this.Type == LOAD_BALANCE_RANDOM { // 随机
+	if this.Type == constants.LOAD_BALANCE_RANDOM { // 随机
 		return this.RandomLB(urls)
-	} else if this.Type == LOAD_BALANCE_ROUND { // 轮询
+	} else if this.Type == constants.LOAD_BALANCE_ROUND { // 轮询
 		return this.RoundLB(serviceName, urls)
 	} else { // 都没有
 		logs.Lg.Error("负载均衡", errors.New("have not select load balance type"))
@@ -132,9 +128,9 @@ func (this *LoadBalance) GrayScaleRoundLB(serviceName string, urls interface{}) 
  * @Description: 根据当前选择，返回url，灰度
 **/
 func (this *LoadBalance) GrayScaleCurUrl(serviceName string, urls interface{}) *url.URL {
-	if this.Type == LOAD_BALANCE_RANDOM { // 随机
+	if this.Type == constants.LOAD_BALANCE_RANDOM { // 随机
 		return this.GrayScaleRandomLB(urls)
-	} else if this.Type == LOAD_BALANCE_ROUND { // 轮询
+	} else if this.Type == constants.LOAD_BALANCE_ROUND { // 轮询
 		return this.GrayScaleRoundLB(serviceName, urls)
 	} else { // 都没有
 		logs.Lg.Error("负载均衡", errors.New("have not select load balance type in gray scale"))

@@ -8,6 +8,7 @@ package nacos
 import (
 	"errors"
 	"fmt"
+	"github.com/MassAdobe/go-gateway/constants"
 	"github.com/MassAdobe/go-gateway/loadbalance"
 	"github.com/MassAdobe/go-gateway/logs"
 	"github.com/MassAdobe/go-gateway/utils"
@@ -16,12 +17,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-)
-
-const (
-	GRAY_SCALE_USER_ID_TYPE   = "userscope" // 灰度发布种类：用户ID范围
-	GRAY_SCALE_USER_LIST_TYPE = "userlist"  // 灰度发布种类：用户列表
-	GRAY_SCALE_IP_LIST_TYPE   = "iplist"    // 灰度发布种类：IP列表
 )
 
 var (
@@ -67,7 +62,7 @@ func InitNacosProfile() {
 		// 配置灰度发布
 		if InitConfiguration.GrayScale.Open && len(InitConfiguration.GrayScale.Version) != 0 && len(InitConfiguration.GrayScale.Type) != 0 {
 			switch strings.ToLower(InitConfiguration.GrayScale.Type) {
-			case GRAY_SCALE_USER_ID_TYPE: // 灰度发布种类：用户ID范围
+			case constants.GRAY_SCALE_USER_ID_TYPE: // 灰度发布种类：用户ID范围
 				PuGrayScale = &GrayScale{
 					Open:    InitConfiguration.GrayScale.Open,
 					Version: strings.ToLower(InitConfiguration.GrayScale.Version),
@@ -78,7 +73,7 @@ func InitNacosProfile() {
 					},
 				}
 				break
-			case GRAY_SCALE_USER_LIST_TYPE: // 灰度发布种类：用户列表
+			case constants.GRAY_SCALE_USER_LIST_TYPE: // 灰度发布种类：用户列表
 				PuGrayScale = &GrayScale{
 					Open:    InitConfiguration.GrayScale.Open,
 					Version: strings.ToLower(InitConfiguration.GrayScale.Version),
@@ -89,7 +84,7 @@ func InitNacosProfile() {
 					PuGrayScale.List[val] = true
 				}
 				break
-			case GRAY_SCALE_IP_LIST_TYPE: // 灰度发布种类：IP列表
+			case constants.GRAY_SCALE_IP_LIST_TYPE: // 灰度发布种类：IP列表
 				PuGrayScale = &GrayScale{
 					Open:    InitConfiguration.GrayScale.Open,
 					Version: strings.ToLower(InitConfiguration.GrayScale.Version),
@@ -228,7 +223,7 @@ func ModifiedGrayScale(profile *InitNacosConfiguration) {
 		logs.Lg.Debug("动态修改灰度发布", logs.Desc("开启灰度发布"))
 		if len(profile.GrayScale.Version) != 0 && len(profile.GrayScale.Type) != 0 {
 			switch strings.ToLower(profile.GrayScale.Type) {
-			case GRAY_SCALE_USER_ID_TYPE: // 灰度发布种类：用户ID范围
+			case constants.GRAY_SCALE_USER_ID_TYPE: // 灰度发布种类：用户ID范围
 				PuGrayScale = &GrayScale{
 					Open:    profile.GrayScale.Open,
 					Version: strings.ToLower(profile.GrayScale.Version),
@@ -239,7 +234,7 @@ func ModifiedGrayScale(profile *InitNacosConfiguration) {
 					},
 				}
 				break
-			case GRAY_SCALE_USER_LIST_TYPE: // 灰度发布种类：用户列表
+			case constants.GRAY_SCALE_USER_LIST_TYPE: // 灰度发布种类：用户列表
 				PuGrayScale = &GrayScale{
 					Open:    profile.GrayScale.Open,
 					Version: strings.ToLower(profile.GrayScale.Version),
@@ -250,7 +245,7 @@ func ModifiedGrayScale(profile *InitNacosConfiguration) {
 					PuGrayScale.List[val] = true
 				}
 				break
-			case GRAY_SCALE_IP_LIST_TYPE: // 灰度发布种类：IP列表
+			case constants.GRAY_SCALE_IP_LIST_TYPE: // 灰度发布种类：IP列表
 				PuGrayScale = &GrayScale{
 					Open:    profile.GrayScale.Open,
 					Version: strings.ToLower(profile.GrayScale.Version),
